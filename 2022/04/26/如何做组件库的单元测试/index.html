@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><meta http-equiv="Content-Security-Policy" content="upgrade-insecure-requests"><meta><title>如何做组件库的单元测试 - 胡金斌的个人网站</title><link rel="manifest" href="/manifest.json"><meta name="application-name" content="胡金斌的个人网站"><meta name="msapplication-TileImage" content="https://cdn.jsdelivr.net/gh/removeif/removeif-demo@latest/img/favicon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="胡金斌的个人网站"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="description" content="前言在我们开发完一个组件库的后，在做单元测试时，代码覆盖率常常被拿来作为衡量测试好坏的指标，甚至，用代码覆盖率来考核测试任务完成情况，比如，代码覆盖率必须达到80％或 90％。于是乎，测试人员费尽心思设计案例覆盖代码。用代码覆盖率来衡量，有利也有有弊。 首先，让我们先来了解一下所谓的“代码覆盖率”。我找来了所谓的定义： 代码覆盖率 ＝ 代码的覆盖程度，一种度量方式。 关于如何开发组件库，可看这篇："><meta property="og:type" content="blog"><meta property="og:title" content="胡金斌"><meta property="og:url" content="https://github.com/hujinbin"><meta property="og:site_name" content="胡金斌"><meta property="og:description" content="前言在我们开发完一个组件库的后，在做单元测试时，代码覆盖率常常被拿来作为衡量测试好坏的指标，甚至，用代码覆盖率来考核测试任务完成情况，比如，代码覆盖率必须达到80％或 90％。于是乎，测试人员费尽心思设计案例覆盖代码。用代码覆盖率来衡量，有利也有有弊。 首先，让我们先来了解一下所谓的“代码覆盖率”。我找来了所谓的定义： 代码覆盖率 ＝ 代码的覆盖程度，一种度量方式。 关于如何开发组件库，可看这篇："><meta property="og:locale" content="zh_CN"><meta property="og:image" content="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg"><meta property="article:published_time" content="2022-04-26T08:43:36.000Z"><meta property="article:modified_time" content="2025-09-07T14:01:24.928Z"><meta property="article:author" content="hujinbin"><meta property="article:tag" content="javascript"><meta property="twitter:card" content="summary"><meta property="twitter:image" content="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"http://hjb.leheavengame.com/2022/04/26/%E5%A6%82%E4%BD%95%E5%81%9A%E7%BB%84%E4%BB%B6%E5%BA%93%E7%9A%84%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95/"},"headline":"胡金斌的个人网站","image":["http://cdn.leheavengame.com/jue/images/d61d9570-c53e-11ec-a211-7793e54d3a57.jpg"],"datePublished":"2022-04-26T08:43:36.000Z","dateModified":"2025-09-07T14:01:24.928Z","author":{"@type":"Person","name":"hujinbin"},"description":"前言在我们开发完一个组件库的后，在做单元测试时，代码覆盖率常常被拿来作为衡量测试好坏的指标，甚至，用代码覆盖率来考核测试任务完成情况，比如，代码覆盖率必须达到80％或 90％。于是乎，测试人员费尽心思设计案例覆盖代码。用代码覆盖率来衡量，有利也有有弊。 首先，让我们先来了解一下所谓的“代码覆盖率”。我找来了所谓的定义： 代码覆盖率 ＝ 代码的覆盖程度，一种度量方式。 关于如何开发组件库，可看这篇："}</script><link rel="canonical" href="http://hjb.leheavengame.com/2022/04/26/%E5%A6%82%E4%BD%95%E5%81%9A%E7%BB%84%E4%BB%B6%E5%BA%93%E7%9A%84%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95/"><link rel="icon" href="https://cdn.jsdelivr.net/gh/removeif/removeif-demo@latest/img/favicon.png"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/5.12.0/css/all.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/highlight.js/9.12.0/styles/atom-one-light.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css2?family=Ubuntu:wght@400;600&amp;family=Source+Code+Pro"><link rel="stylesheet" href="/css/default.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/5.12.0/css/all.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css?family=Ubuntu:400,600|Source+Code+Pro|Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Microsoft YaHei:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&amp;amp;subset=latin,latin-ext|Inconsolata|Itim|Lobster.css"><script src="https://cdnjs.loli.net/ajax/libs/jquery/3.3.1/jquery.min.js"></script><script src="/js/globalUtils.js"></script><style>body>.footer,body>.navbar,body>.section{opacity:0}</style><!--!--><script>var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            hm.src = "//hm.baidu.com/hm.js?5676cd260145578c2f389fb76f4c82be";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();</script><script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" defer></script><!--!--><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.7.0/css/justifiedGallery.min.css"><!--!--><!--!--><script src="https://cdnjs.loli.net/ajax/libs/pace/1.0.2/pace.min.js"></script><script data-ad-client="ca-pub-7979174285252748" src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js" async></script><link rel="stylesheet" href="/live2d/waifu.css"><script type="text/javascript" async src="/live2d/autoload.js"></script><script>
+        if(window.location.origin === 'http://hjb.leheavengame.com'){
+            window.location.replace("https://hjb.leheavengame.com"+window.location.pathname)
+        }
+        </script><meta name="generator" content="Hexo 5.3.0"></head><body class="is-3-column has-navbar-fixed-top"><nav class="navbar navbar-main is-fixed-top"><div class="container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/"><img src="http://cdn.leheavengame.com/jue/images/bcd357f0-a4c2-11eb-ac26-0f6ed95d4e69.png" alt="胡金斌的个人网站" height="28"></a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">首页</a><a class="navbar-item" href="/archives">归档</a><a class="navbar-item" href="/tags">标签</a><a class="navbar-item" href="/media">影音</a><a class="navbar-item" href="/album">相册</a><a class="navbar-item" href="/friend">友链</a><a class="navbar-item" href="/self-talking">碎碎念</a><a class="navbar-item" href="/message">留言</a><a class="navbar-item" href="/about">关于</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/hujinbin"><i class="fab fa-github"></i></a><a class="navbar-item search" title="搜索" href="javascript:;"><i class="fas fa-search"></i></a><a class="navbar-item" id="night-nav" title="Night Mode" href="javascript:;"><i class="fas fa-moon" id="night-icon"></i></a></div></div></div></nav><script type="text/javascript" src="/js/theme-setting.js"></script><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-9-widescreen"><div class="card widget"><div class="g-ads-x"><div class="card-content"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7979174285252748" data-ad-slot="5638602543"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div></div></div><div class="card"><article class="card-content article" role="article"><div class="article-meta size-small is-uppercase level is-mobile"><div class="level-left"><i class="far fa-calendar-plus"> </i>2022-04-26  <a class="commentCountImg" href="/2022/04/26/%E5%A6%82%E4%BD%95%E5%81%9A%E7%BB%84%E4%BB%B6%E5%BA%93%E7%9A%84%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95/#comment-container"><span class="display-none-class">3f7270288a9b0ddd09ad4709227e52f6</span><i class="far fa-comment-dots"></i> <span class="commentCount" id="3f7270288a9b0ddd09ad4709227e52f6">99+</span>  </a><span class="level-item"><i class="far fa-clock"> </i>10 分钟  <i class="fas fa-pencil-alt"> </i>1.6 k</span><span class="level-item" id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv">0</span>次访问</span></div></div><h1 class="title is-3 is-size-4-mobile">如何做组件库的单元测试</h1><div class="content"><h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>在我们开发完一个组件库的后，在做单元测试时，代码覆盖率常常被拿来作为衡量测试好坏的指标，甚至，用代码覆盖率来考核测试任务完成情况，比如，代码覆盖率必须达到80％或 90％。于是乎，测试人员费尽心思设计案例覆盖代码。用代码覆盖率来衡量，有利也有有弊。</p>
+<p>首先，让我们先来了解一下所谓的“代码覆盖率”。我找来了所谓的定义：</p>
+<p>代码覆盖率 ＝ 代码的覆盖程度，一种度量方式。</p>
+<p>关于如何开发组件库，可看这篇：</p>
+<p><a target="_blank" rel="noopener" href="https://jue.leheavengame.com/article/60a89b56f631d777dcde0367">如何基于vue开发ui组件库（heaven-ui）</a></p>
+<a id="more"></a>
+
+
+
+<h3 id="单元测试"><a href="#单元测试" class="headerlink" title="单元测试"></a>单元测试</h3><p>英文叫 Unit Testing，又称为模块测试，是针对程序模块来进行正确性检验的测试工作。程序单元是应用的最小可测试部件。在过程化编程中，一个单元就是单个程序、函数、过程等；对于面向对象编程，最小单元就是方法，包括基类（超类）、抽象类、或者派生类（子类）中的方法。</p>
+<p>需要注意以下几种情况：</p>
+<ol>
+<li>需要访问数据库的测试不叫单元测试；</li>
+<li>需要访问网络的测试不叫单元测试；</li>
+<li>需要访问文件系统的测试不叫单元测试。</li>
+</ol>
+<p>虽然编写单元测试的过程很繁琐，但不得不说，它对于我们的组件的迭代有很大的帮助。</p>
+<p>比如写单元测试的时候，经常会发生输出结果不符合你预期的结果，这时你就得重新审视你的代码了。</p>
+<p>组件库中每一个组件都可能会重构或者更新迭代，如果单元测试覆盖率高的话，修改代码之后就越可能会发现潜在的问题。比如某些功能代码不小心删掉了。这样会导致用户更新最新版本时，缺少了之前使用过的功能，产生一些疑惑。</p>
+<h4 id="技术选型"><a href="#技术选型" class="headerlink" title="技术选型"></a>技术选型</h4><p>单元测试用到的工具大致分为三部分：分别为管理工具、测试框架、断言库。</p>
+<p>测试框架市面上有很多种，常用的测试框架有以下几种：</p>
+<ul>
+<li><p>Jasmine：Behavior-Drive development(BDD)风格的测试框架，在业内较为流行,功能很全面，自带 asssert、mock 功能</p>
+</li>
+<li><p>Qunit：该框架诞生之初是为了 jquery 的单元测试，后来独立出来不再依赖于 jquery 本身，但是其身上还是脱离不开 jquery 的影子</p>
+</li>
+<li><p>Mocha：Mocha 是一个功能丰富的前端测试框架。所谓”测试框架”，就是运行测试的工具。通过它，可以为 JavaScript 应用添加测试用例，从而保证代码的质量。Mocha 既可以基于 Node.js 环境运行也可以在浏览器环境运行。</p>
+</li>
+<li><p>Jest：来自于 facebook 出品的通用测试框架，Jest 是一个令人愉快的 JavaScript 测试框架，专注于简洁明快。他适用但不局限于使用以下技术的项目：Babel, TypeScript, Node, React, Angular, Vue</p>
+</li>
+</ul>
+<p>这里 我选用的是Karma、Mocha 和 Chai，接下来简单介绍一下我使用的（Karma）管理工具和（Chai）断言库</p>
+<ul>
+<li><p>Karma 是一个基于 Node.js 的 JavaScript 测试执行过程管理工具，又称 Test Runner。常用的管理工具还有 Jest 等。</p>
+</li>
+<li><p>Chai 是一个断言库，类似于 Node 的内置断言。通过提供许多可以针对代码运行的断言，它使测试变得更加容易。</p>
+</li>
+<li><p>Karma 是一个基于 Node.js 的 JavaScript 测试执行过程管理工具，又称 Test Runner。常用的管理工具还有 Jest 等。</p>
+</li>
+<li><p>Chai 是一个断言库，类似于 Node 的内置断言。通过提供许多可以针对代码运行的断言，它使测试变得更加容易。</p>
+</li>
+</ul>
+<h4 id="编写测试用例"><a href="#编写测试用例" class="headerlink" title="编写测试用例"></a>编写测试用例</h4><p>组件库开发调试完成后，我们需要编写每个组件对应的单元测试，以达到100%的覆盖率为⽬标。</p>
+<p>我在组件库中选择的是karma,目录结构如下：</p>
+<p><img src="http://cdn.leheavengame.com/jue/images/d61d9570-c53e-11ec-a211-7793e54d3a57.jpg" alt="img"></p>
+<p>spec目录就是对应组件的单元测试用例了</p>
+<p>以button为例：</p>
+<p>test/specs/Button.spec.js</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">import Vue from &#39;vue&#39;</span><br><span class="line">import Button from &#39;@&#x2F;components&#x2F;button&#39;</span><br><span class="line"></span><br><span class="line">describe(&#39;button.vue&#39;, () &#x3D;&gt; &#123;</span><br><span class="line">  it(&#39;button是否存在&#39;,()&#x3D;&gt;&#123;</span><br><span class="line">    expect(Button).to.be.ok;</span><br><span class="line">  &#125;)</span><br><span class="line">  it(&#39;测试name是否生效&#39;, () &#x3D;&gt; &#123;</span><br><span class="line">    const Constructor &#x3D; Vue.extend(Button)</span><br><span class="line">    const vm &#x3D; new Constructor().$mount()</span><br><span class="line">    expect(vm.$el.querySelector(&#39;.hello h1&#39;).textContent)</span><br><span class="line">      .to.equal(&#39;Welcome to Your Vue.js App&#39;)</span><br><span class="line">  &#125;)</span><br><span class="line">&#125;)</span><br></pre></td></tr></table></figure>
+
+
+<p>执行上述的单元测试代码，就能证明这段代码的行为输出的结果，是否和我们期望的一致。</p>
+<h3 id="为什么要做单元测试"><a href="#为什么要做单元测试" class="headerlink" title="为什么要做单元测试"></a>为什么要做单元测试</h3><p>为达到100%的覆盖率，我们必须尽快能的覆盖所有场景。不得不说，编写测试用例比较繁琐，但我们又为什么要做这繁琐的工作呢？</p>
+<p>因为单元测试包含以下优点：</p>
+<ol>
+<li><p>可能会测出功能的隐藏bug</p>
+</li>
+<li><p>保证代码重构的安全性。</p>
+</li>
+<li><p>组件库中每⼀个组件都可能会重构或者更新迭代，如果单元测试覆盖率⾼的话，修改代码之后就越可能会发现潜在的问题。⽐如版本升级后，导致某部分功能的缺失。</p>
+</li>
+<li><p>自动检测，可以做到一次编写，多次运行，节省重复测试的时间</p>
+</li>
+</ol>
+<p>所以对于现在的组件库项目项目，能够被后续的开发者理解并且参照着继续维护下去，那么单元测试是非常必要的。</p>
+</div><div class="article-licensing box"><div class="licensing-title"><p>如何做组件库的单元测试</p><p><a href="http://hjb.leheavengame.com/2022/04/26/如何做组件库的单元测试/">http://hjb.leheavengame.com/2022/04/26/如何做组件库的单元测试/</a></p></div><div class="licensing-meta level is-mobile"><div class="level-left"><div class="level-item is-narrow"><div><h6>作者</h6><a href="http://hjb.leheavengame.com"><p>hujinbin</p></a></div></div><div class="level-item is-narrow"><div><h6>发布于</h6><p>2022-04-26</p></div></div><div class="level-item is-narrow"><div><h6>更新于</h6><p>2025-09-07</p></div></div><div class="level-item is-narrow"><div><h6>许可协议</h6><p><a class="icon" rel="noopener" target="_blank" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a><a class="icon" rel="noopener" target="_blank" title="Attribution" href="https://creativecommons.org/licenses/by/4.0/"><i class="fab fa-creative-commons-by"></i></a><a class="icon" rel="noopener" target="_blank" title="Noncommercial" href="https://creativecommons.org/licenses/by-nc/4.0/"><i class="fab fa-creative-commons-nc"></i></a></p></div></div></div></div></div><div class="recommend-area"><div class="recommend-post"><span class="is-size-6 has-text-grey has-mr-7"># 相关文章</span><br><span>  1.<a class="is-size-6" href="/2025/06/03/%E4%BB%8E%E9%9B%B6%E6%9E%84%E5%BB%BA%E5%89%8D%E7%AB%AF%E7%9B%91%E6%8E%A7%E6%A1%86%E6%9E%B6%EF%BC%9A%E5%8E%9F%E7%90%86%E4%B8%8E%E5%AE%9E%E8%B7%B5/" target="_blank">从零构建前端监控框架：原理与实践</a><br></span><span>  2.<a class="is-size-6" href="/2025/01/05/%E6%8E%A2%E7%B4%A2%E5%BE%AE%E5%89%8D%E7%AB%AF%E6%9E%B6%E6%9E%84%EF%BC%9A%E5%A4%9A%E7%A7%8D%E5%AE%9E%E7%8E%B0%E6%96%B9%E5%BC%8F%E4%B8%8E%E5%AE%9E%E8%B7%B5%E6%80%9D%E8%80%83/" target="_blank">探索微前端架构：多种实现方式与实践思考</a><br></span><span>  3.<a class="is-size-6" href="/2024/06/11/%E5%89%8D%E7%AB%AF%E5%9B%BD%E9%99%85%E5%8C%96%E5%85%A8%E6%B5%81%E7%A8%8B%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/" target="_blank">前端国际化全流程解决方案</a><br></span><span>  4.<a class="is-size-6" href="/2022/12/19/vue2%E8%80%81%E9%A1%B9%E7%9B%AEvite%E5%8D%87%E7%BA%A7%E6%94%B9%E9%80%A0/" target="_blank">vue2老项目vite升级改造</a><br></span><span>  5.<a class="is-size-6" href="/2022/02/05/%E5%A6%82%E4%BD%95%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E8%87%AA%E5%B7%B1%E7%9A%84%E8%84%9A%E6%89%8B%E6%9E%B6/" target="_blank">如何搭建一个自己的脚手架</a><br></span><span>  6.<a class="is-size-6" href="/2021/12/26/pm2%E7%9A%84%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8/" target="_blank">pm2的基本使用</a><br></span><span>  7.<a class="is-size-6" href="/2021/12/18/TypeError-token-type-endsWith-is-not-a-function-vue-eslint-%E6%8A%A5%E9%94%99%E9%97%AE%E9%A2%98%E4%BF%AE%E5%A4%8D/" target="_blank">TypeError: token.type.endsWith is not a function vue eslint 报错问题修复</a><br></span><span>  8.<a class="is-size-6" href="/2021/11/24/Git%E6%8F%90%E4%BA%A4%E8%A7%84%E8%8C%83%E4%BF%9D%E6%8A%A4/" target="_blank">Git提交规范保护</a><br></span></div></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/social-share.js/1.0.16/css/share.min.css"><div class="social-share"></div><script src="https://cdnjs.loli.net/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script></article></div><div class="card"><div class="card-content"><h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3><div class="buttons is-centered"><a class="button donate" data-type="alipay"><span class="icon is-small"><i class="fab fa-alipay"></i></span><span>支付宝</span><span class="qrcode"><img src="https://img.alicdn.com/imgextra/i4/2509590220/TB2GxhZfjnD8KJjSspbXXbbEXXa_!!2509590220.jpg" alt="支付宝"></span></a><a class="button donate" data-type="wechat"><span class="icon is-small"><i class="fab fa-weixin"></i></span><span>微信</span><span class="qrcode"><img src="https://img.alicdn.com/imgextra/i1/2509590220/TB2K0hPfdnJ8KJjSszdXXaxuFXa_!!2509590220.png" alt="微信"></span></a></div></div></div><nav class="post-navigation mt-4 level is-mobile"><div class="level-start"><a class="article-nav-prev level level-item link-muted" href="/2022/12/19/vue2%E8%80%81%E9%A1%B9%E7%9B%AEvite%E5%8D%87%E7%BA%A7%E6%94%B9%E9%80%A0/"><i class="level-item fas fa-chevron-left"></i><span class="level-item">vue2老项目vite升级改造</span></a></div><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/2022/02/05/%E5%A6%82%E4%BD%95%E6%90%AD%E5%BB%BA%E4%B8%80%E4%B8%AA%E8%87%AA%E5%B7%B1%E7%9A%84%E8%84%9A%E6%89%8B%E6%9E%B6/"><span class="level-item">如何搭建一个自己的脚手架</span><i class="level-item fas fa-chevron-right"></i></a></div></nav><div class="card widget"><div class="g-ads-x"><div class="card-content"><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><ins class="adsbygoogle" style="display:block; text-align:center;" data-ad-layout="in-article" data-ad-format="fluid" data-ad-client="ca-pub-7979174285252748" data-ad-slot="5638602543"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div></div></div><div class="card"><div class="card-content"><div class="title is-5">评论</div><div id="comment-container"></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/gitalk/1.6.0/gitalk.css"><script> $.getScript('/js/gitalk.min.js', function () { 
+            var gitalk = new Gitalk({
+            language:'zh-CN',
+            id: '3f7270288a9b0ddd09ad4709227e52f6',
+            repo: 'myBlog',
+            owner: 'hujinbin',
+            clientID: '80d9615d7f9ac170422a',
+            clientSecret: '96a3ef8319106445349a5c16e716dcf5caa0e887',
+            admin: ["hujinbin"],
+            createIssueManually: true,
+            distractionFreeMode: false,
+            perPage: 10,
+            pagerDirection: 'last',
+            
+            
+            enableHotKey: true,
+            isLocked: false
+        })
+        gitalk.render('comment-container')});</script></div></div></div><div class="column column-left is-4-tablet is-4-desktop is-3-widescreen  order-1 is-sticky"><!--!--><div class="card widget" data-type="profile"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="avatar is-rounded" src="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg" alt="胡金斌"></figure><p class="title is-size-4 is-block" style="line-height:inherit;">胡金斌</p><p class="is-size-6 is-block">web前端开发工程师</p><p class="is-size-6 is-flex justify-content-center"><i class="fas fa-map-marker-alt mr-1"></i><span>浙江杭州</span></p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">文章</p><a href="/archives"><p class="title">44</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">分类</p><a href="/categories"><p class="title">0</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">标签</p><a href="/tags"><p class="title">10</p></a></div></div></nav><div class="level"><a class="level-item button is-primary is-rounded" href="https://github.com/hujinbin" target="_blank" rel="noopener">关注我</a></div><div class="level is-mobile"><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="Github" href="https://github.com/hujinbin"><i class="fab fa-github"></i></a><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="Email" href="mailto:437044048@qq.com"><i class="fa fa-envelope"></i></a><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="RSS" href="/atom.xml"><i class="fas fa-rss"></i></a></div><div><hr><p id="hitokoto">:D 一言句子获取中...</p><script type="text/javascript" defer>function getYiyan(){
+                                $.getJSON("https://v1.hitokoto.cn/", function (data) {
+                                if(data){
+                                    $('#hitokoto').html("");
+                                    $('#hitokoto').append("<strong style='color: #3273dc;'>"+data.hitokoto+"</strong>"+
+                                    "<p>"+"来源《"+data.from+"》</p><p>提供者-"+data.creator+"</p>");
+                                }});}
+                                $(function (){getYiyan();$('#hitokoto').click(function(){getYiyan();})});</script></div></div></div><div class="card widget" data-type="links"><div class="card-content"><div class="menu"><h3 class="menu-label">链接</h3><ul class="menu-list"><li><a class="level is-mobile" href="https://cash.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惠shop好货</span></span><span class="level-right"><span class="level-item tag">cash.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://jue.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惊觉</span></span><span class="level-right"><span class="level-item tag">jue.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://bbs.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">乾学网</span></span><span class="level-right"><span class="level-item tag">bbs.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://guide.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">乾坤宝录</span></span><span class="level-right"><span class="level-item tag">guide.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://coupon.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惠shop</span></span><span class="level-right"><span class="level-item tag">coupon.leheavengame.com</span></span></a></li></ul></div></div></div><!--!--><div class="card widget"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><div class="media-content"><p class="date"><time dateTime="2025-06-03T12:00:36.000Z">2025-06-03</time></p><p class="title"><a href="/2025/06/03/%E4%BB%8E%E9%9B%B6%E6%9E%84%E5%BB%BA%E5%89%8D%E7%AB%AF%E7%9B%91%E6%8E%A7%E6%A1%86%E6%9E%B6%EF%BC%9A%E5%8E%9F%E7%90%86%E4%B8%8E%E5%AE%9E%E8%B7%B5/">从零构建前端监控框架：原理与实践</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2025-01-05T12:39:38.000Z">2025-01-05</time></p><p class="title"><a href="/2025/01/05/%E6%8E%A2%E7%B4%A2%E5%BE%AE%E5%89%8D%E7%AB%AF%E6%9E%B6%E6%9E%84%EF%BC%9A%E5%A4%9A%E7%A7%8D%E5%AE%9E%E7%8E%B0%E6%96%B9%E5%BC%8F%E4%B8%8E%E5%AE%9E%E8%B7%B5%E6%80%9D%E8%80%83/">探索微前端架构：多种实现方式与实践思考</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2024-06-11T12:18:36.000Z">2024-06-11</time></p><p class="title"><a href="/2024/06/11/%E5%89%8D%E7%AB%AF%E5%9B%BD%E9%99%85%E5%8C%96%E5%85%A8%E6%B5%81%E7%A8%8B%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88/">前端国际化全流程解决方案</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2022-12-19T03:03:44.000Z">2022-12-19</time></p><p class="title"><a href="/2022/12/19/vue2%E8%80%81%E9%A1%B9%E7%9B%AEvite%E5%8D%87%E7%BA%A7%E6%94%B9%E9%80%A0/">vue2老项目vite升级改造</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2022-04-26T08:43:36.000Z">2022-04-26</time></p><p class="title"><a href="/2022/04/26/%E5%A6%82%E4%BD%95%E5%81%9A%E7%BB%84%E4%BB%B6%E5%BA%93%E7%9A%84%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95/">如何做组件库的单元测试</a></p></div></article></div></div><!--!--><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">归档</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/archives/2025/06/"><span class="level-start"><span class="level-item">六月 2025</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2025/01/"><span class="level-start"><span class="level-item">一月 2025</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2024/06/"><span class="level-start"><span class="level-item">六月 2024</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/12/"><span class="level-start"><span class="level-item">十二月 2022</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2022/04/"><span class="level-start"><span class="level-item">四月 2022</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><a class="level is-mobile is-marginless" href="/archives/"><span class="level-start"><span class="level-item">查看全部&gt;&gt;</span></span></a></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">标签</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/javascript/"><span class="tag">javascript</span><span class="tag is-grey-lightest">38</span></a></div><div class="control"><a class="tags has-addons" href="/tags/node/"><span class="tag">node</span><span class="tag is-grey-lightest">5</span></a></div><div class="control"><a class="tags has-addons" href="/tags/Vue/"><span class="tag">Vue</span><span class="tag is-grey-lightest">4</span></a></div><div class="control"><a class="tags has-addons" href="/tags/css/"><span class="tag">css</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/http/"><span class="tag">http</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/git/"><span class="tag">git</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/html/"><span class="tag">html</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/react/"><span class="tag">react</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/vue/"><span class="tag">vue</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%BE%AE%E4%BF%A1%E5%B0%8F%E7%A8%8B%E5%BA%8F/"><span class="tag">微信小程序</span><span class="tag is-grey-lightest">1</span></a></div></div></div></div></div><div class="card widget" data-type="subscribe-email"><div class="card-content"><div class="menu"><h3 class="menu-label">订阅更新</h3><form action="https://feedburner.google.com/fb/a/mailverify" method="post" target="popupwindow" onsubmit="window.open(&#039;https://feedburner.google.com/fb/a/mailverify?uri=&#039;,&#039;popupwindow&#039;,&#039;scrollbars=yes,width=550,height=520&#039;);return true"><input type="hidden" value="" name="uri"><input type="hidden" name="loc" value="en_US"><div class="field has-addons"><div class="control has-icons-left is-expanded"><input class="input" name="email" type="email" placeholder="Email"><span class="icon is-small is-left"><i class="fas fa-envelope"></i></span></div><div class="control"><input class="button" type="submit" value="订阅"></div></div></form></div></div></div><div class="card widget"><div class="g-ads-x"><div class="card-content"><div class="menu"><h3 class="menu-label">广告</h3></div><br><script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><ins class="adsbygoogle" style="display:block" data-ad-format="auto" data-full-width-responsive="true" data-ad-client="ca-pub-7979174285252748" data-ad-slot="5638602543"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div></div></div><div class="column-right-shadow is-hidden-widescreen"></div></div></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/"><img src="http://cdn.leheavengame.com/jue/images/bcd357f0-a4c2-11eb-ac26-0f6ed95d4e69.png" alt="胡金斌的个人网站" height="28"></a><p class="size-small"><span>&copy; 2025 hujinbin</span>  <br><span>© <a href="https://beian.miit.gov.cn/" rel="nofollow noopener noreferrer" target="_blank">浙ICP备17021862号-1</a><br></span><span>© 版权说明：[本网站所有内容均收集于互联网或自己创作,<br />&nbsp;&nbsp;&nbsp;&nbsp;方便于网友与自己学习交流，如有侵权，请<a href="/message" target="_blank">留言</a>，立即处理]<br /></span><span><span id="statistic-times">loading...</span><script>function createTime(time) {
+            var n = new Date(time);
+            now.setTime(now.getTime() + 250),
+                days = (now - n) / 1e3 / 60 / 60 / 24,
+                dnum = Math.floor(days),
+                hours = (now - n) / 1e3 / 60 / 60 - 24 * dnum,
+                hnum = Math.floor(hours),
+            1 == String(hnum).length && (hnum = "0" + hnum),
+                minutes = (now - n) / 1e3 / 60 - 1440 * dnum - 60 * hnum,
+                mnum = Math.floor(minutes),
+            1 == String(mnum).length && (mnum = "0" + mnum),
+                seconds = (now - n) / 1e3 - 86400 * dnum - 3600 * hnum - 60 * mnum,
+                snum = Math.round(seconds),
+            1 == String(snum).length && (snum = "0" + snum),
+                document.getElementById("statistic-times").innerHTML = "❤️本站自 <strong>"+time.split(" ")[0].replace(/\//g,".")+"</strong> 已运行 <strong>" + dnum + "</strong> 天 <strong>" + hnum + "</strong> 小时 <strong>" + mnum + "</strong> 分 <strong>" + snum + "</strong> 秒！❤️";
+        }var now = new Date();setInterval("createTime('2017/05/25 00:00:00')", 250,"");</script><br></span><div class="size-small"><span>❤️感谢 <strong><span id="busuanzi_value_site_uv">99+</span></strong> 小伙伴的 <strong><span id="busuanzi_value_site_pv">99+</span></strong> 次光临！❤️</span></div></p></div><div class="level-end"><div class="sideMusic"><link rel="stylesheet" href="/script/APlayer.min.css"><script src="/js/APlayer.min.js"></script><script src="/script/Meting.min.js"></script><meting-js style="width: auto;height: 2000px;" server="netease" type="playlist" id="2364053447" theme="#2980b9" loop="all" autoplay="false" order="list" storageName="aplayer-setting" lrctype="0" list-max-height="400px" fixed="true"></meting-js></div></div></div></div><script>
+            var bp = document.createElement('script');
+            var curProtocol = window.location.protocol.split(':')[0];
+            if (curProtocol === 'https') {
+                bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+            }
+            else {
+                bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+            }
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(bp, s);
+        </script></footer><script src="https://cdnjs.loli.net/ajax/libs/moment.js/2.22.2/moment-with-locales.min.js"></script><script src="https://cdnjs.loli.net/ajax/libs/clipboard.js/2.0.4/clipboard.min.js" async></script><script>moment.locale("zh-CN");</script><script>var IcarusThemeSettings = {
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="/js/column.js"></script><script src="/js/animation.js"></script><a id="back-to-top" title="回到顶端" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back_to_top.js" defer></script><!--!--><!--!--><!--!--><script src="https://cdnjs.loli.net/ajax/libs/lightgallery/1.6.8/js/lightgallery.min.js" defer></script><script src="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.7.0/js/jquery.justifiedGallery.min.js" defer></script><script>window.addEventListener("load", () => {
+            if (typeof $.fn.lightGallery === 'function') {
+                $('.article').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof $.fn.justifiedGallery === 'function') {
+                if ($('.justified-gallery > p > .gallery-item').length) {
+                    $('.justified-gallery > p > .gallery-item').unwrap();
+                }
+                $('.justified-gallery').justifiedGallery();
+            }
+        });</script><!--!--><!--!--><!--!--><script src="/js/main.js" defer></script><script>$.getScript('/js/comment-issue-data.js',function(){loadIssueData('80d9615d7f9ac170422a','96a3ef8319106445349a5c16e716dcf5caa0e887','hujinbin','myBlog',false);})</script><div class="searchbox"><div class="searchbox-container"><div class="searchbox-header"><div class="searchbox-input-container"><input class="searchbox-input" type="text" placeholder="想要查找什么..."></div><a class="searchbox-close" href="javascript:;">×</a></div><div class="searchbox-body"></div></div></div><script src="/js/insight.js" defer></script><script>document.addEventListener('DOMContentLoaded', function () {
+            loadInsight({"contentUrl":"/content.json"}, {"hint":"想要查找什么...","untitled":"(无标题)","posts":"文章","pages":"页面","categories":"分类","tags":"标签"});
+        });</script><script src="/script/pjax.js"></script><script type="text/javascript">var pjax = new Pjax({
+            elements: "a",//代表点击链接就更新
+            selectors: [  //代表要更新的节点
+                ".section",
+                "title"
+            ],
+            cache: true,
+            cacheBust:false
+        })
+
+        function loadBusuanzi(){
+        $.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js", function () {});
+        }
+
+        // 开始 PJAX 执行的函数
+        document.addEventListener('pjax:send', function () {
+        });
+        
+        // PJAX 完成之后执行的函数，可以和上面的重载放在一起
+        document.addEventListener('pjax:complete', function () {
+            $(".section").css({opacity:1});
+            if(false){
+                try{
+                    $.getScript('/js/comment-issue-data.js',function(){loadIssueData('80d9615d7f9ac170422a','96a3ef8319106445349a5c16e716dcf5caa0e887','hujinbin','myBlog',false);});
+                }catch(e){}
+             }
+            if(false){
+                loadMathJax();
+            }
+            loadMainJs(jQuery, window.moment, window.ClipboardJS, window.IcarusThemeSettings);
+            loadBackTop();
+            loadBusuanzi();
+            if(typeof loadBanner == 'function'){
+                loadBanner();
+            }
+        });</script></body></html>
