@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><script id="blog-adsense-loader" data-cfasync="false" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7979174285252748" crossorigin="anonymous"></script><script data-cfasync="false">
+                document.getElementById('blog-adsense-loader').addEventListener('error', function () {
+                    window.__blogAdsenseLoaderFailed = true;
+                    document.dispatchEvent(new Event('adsense:loader-error'));
+                });
+            </script><script data-cfasync="false" defer src="/js/adsense.js?v=1"></script><script>
+                if (window.location.protocol === 'https:') {
+                    var policy = document.createElement('meta');
+                    policy.httpEquiv = 'Content-Security-Policy';
+                    policy.content = 'upgrade-insecure-requests';
+                    document.head.appendChild(policy);
+                }
+            </script><meta><title>Claude Code 泄露源码解读,从 Agent 循环到工具权限与上下文管理 - 胡金斌的个人网站</title><link rel="manifest" href="/manifest.json"><meta name="application-name" content="胡金斌的个人网站"><meta name="msapplication-TileImage" content="https://cdn.jsdelivr.net/gh/removeif/removeif-demo@latest/img/favicon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="胡金斌的个人网站"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="description" content="Claude Code 泄露源码解读 从 Agent 循环到工具权限与上下文管理让编程助手解释一段代码，和让它把一个问题修好，是两种很不一样的体验。前者把答案写在对话框里就够了；后者要碰到真实文件、真实命令，还得面对用户随时插进来的修改。 假设你给它这样一句话：“切换几次 3D 模型，页面就越来越卡。帮我找原因，修完跑一下项目现有的检查。”终端里开始搜索、读文件、改代码，看起来顺理成章。但这些动作"><meta property="og:type" content="blog"><meta property="og:title" content="胡金斌"><meta property="og:url" content="https://github.com/hujinbin"><meta property="og:site_name" content="胡金斌"><meta property="og:description" content="Claude Code 泄露源码解读 从 Agent 循环到工具权限与上下文管理让编程助手解释一段代码，和让它把一个问题修好，是两种很不一样的体验。前者把答案写在对话框里就够了；后者要碰到真实文件、真实命令，还得面对用户随时插进来的修改。 假设你给它这样一句话：“切换几次 3D 模型，页面就越来越卡。帮我找原因，修完跑一下项目现有的检查。”终端里开始搜索、读文件、改代码，看起来顺理成章。但这些动作"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg"><meta property="article:published_time" content="2026-08-07T09:40:07.000Z"><meta property="article:modified_time" content="2026-11-11T08:19:11.549Z"><meta property="article:author" content="hujinbin"><meta property="article:tag" content="AI Agent"><meta property="article:tag" content="TypeScript"><meta property="article:tag" content="Claude Code"><meta property="article:tag" content="Harness"><meta property="twitter:card" content="summary"><meta property="twitter:image" content="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://hjb.leheavengame.com/2026/08/07/Claude-Code-%E6%B3%84%E9%9C%B2%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-%E4%BB%8E-Agent-%E5%BE%AA%E7%8E%AF%E5%88%B0%E5%B7%A5%E5%85%B7%E6%9D%83%E9%99%90%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86/"},"headline":"胡金斌的个人网站","image":["https://hjb.leheavengame.com/img/og_image.png"],"datePublished":"2026-08-07T09:40:07.000Z","dateModified":"2026-11-11T08:19:11.549Z","author":{"@type":"Person","name":"hujinbin"},"description":"Claude Code 泄露源码解读 从 Agent 循环到工具权限与上下文管理让编程助手解释一段代码，和让它把一个问题修好，是两种很不一样的体验。前者把答案写在对话框里就够了；后者要碰到真实文件、真实命令，还得面对用户随时插进来的修改。 假设你给它这样一句话：“切换几次 3D 模型，页面就越来越卡。帮我找原因，修完跑一下项目现有的检查。”终端里开始搜索、读文件、改代码，看起来顺理成章。但这些动作"}</script><link rel="canonical" href="https://hjb.leheavengame.com/2026/08/07/Claude-Code-%E6%B3%84%E9%9C%B2%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-%E4%BB%8E-Agent-%E5%BE%AA%E7%8E%AF%E5%88%B0%E5%B7%A5%E5%85%B7%E6%9D%83%E9%99%90%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86/"><link rel="icon" href="https://cdn.jsdelivr.net/gh/removeif/removeif-demo@latest/img/favicon.png"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/5.12.0/css/all.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/highlight.js/9.12.0/styles/atom-one-light.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css2?family=Ubuntu:wght@400;600&amp;family=Source+Code+Pro"><link rel="stylesheet" href="/css/default.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/5.12.0/css/all.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css?family=Ubuntu:400,600|Source+Code+Pro|Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Microsoft YaHei:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&amp;amp;subset=latin,latin-ext|Inconsolata|Itim|Lobster.css"><script src="/js/vendor/jquery-3.3.1.min.js"></script><script src="/js/globalUtils.js"></script><style>body>.footer,body>.navbar,body>.section{opacity:0}</style><!--!--><script>var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            hm.src = "//hm.baidu.com/hm.js?5676cd260145578c2f389fb76f4c82be";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();</script><script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" defer></script><!--!--><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.7.0/css/justifiedGallery.min.css"><!--!--><!--!--><script src="/js/vendor/pace-1.0.2.min.js"></script><link rel="stylesheet" href="/live2d/waifu.css"><script type="text/javascript" async src="/live2d/autoload.js"></script><script>
+        if(window.location.origin === 'http://hjb.leheavengame.com'){
+            window.location.replace("https://hjb.leheavengame.com"+window.location.pathname)
+        }
+        </script><meta name="generator" content="Hexo 5.3.0"></head><body class="is-3-column has-navbar-fixed-top"><nav class="navbar navbar-main is-fixed-top"><div class="container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/"><img src="http://cdn.leheavengame.com/jue/images/bcd357f0-a4c2-11eb-ac26-0f6ed95d4e69.png" alt="胡金斌的个人网站" height="28"></a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">首页</a><a class="navbar-item" href="/archives">归档</a><a class="navbar-item" href="/tags">标签</a><a class="navbar-item" href="/media">影音</a><a class="navbar-item" href="/album">相册</a><a class="navbar-item" href="/friend">友链</a><a class="navbar-item" href="/self-talking">碎碎念</a><a class="navbar-item" href="/message">留言</a><a class="navbar-item" href="/about">关于</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/hujinbin"><i class="fab fa-github"></i></a><a class="navbar-item search" title="搜索" href="javascript:;"><i class="fas fa-search"></i></a><a class="navbar-item" id="night-nav" title="Night Mode" href="javascript:;"><i class="fas fa-moon" id="night-icon"></i></a></div></div></div></nav><script type="text/javascript" src="/js/theme-setting.js"></script><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-9-widescreen"><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><div class="card"><article class="card-content article" role="article"><div class="article-meta size-small is-uppercase level is-mobile"><div class="level-left"><i class="far fa-calendar-plus"> </i>2026-08-07  <a class="commentCountImg" href="/2026/08/07/Claude-Code-%E6%B3%84%E9%9C%B2%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-%E4%BB%8E-Agent-%E5%BE%AA%E7%8E%AF%E5%88%B0%E5%B7%A5%E5%85%B7%E6%9D%83%E9%99%90%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86/#comment-container"><span class="display-none-class">e94dc3ac50765c0ff631fb8a18326ddc</span><i class="far fa-comment-dots"></i> <span class="commentCount" id="e94dc3ac50765c0ff631fb8a18326ddc">99+</span>  </a><span class="level-item"><i class="far fa-clock"> </i>1 小时  <i class="fas fa-pencil-alt"> </i>12.5 k</span><span class="level-item" id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv">0</span>次访问</span></div></div><h1 class="title is-3 is-size-4-mobile">Claude Code 泄露源码解读,从 Agent 循环到工具权限与上下文管理</h1><div class="content"><h1 id="Claude-Code-泄露源码解读-从-Agent-循环到工具权限与上下文管理"><a href="#Claude-Code-泄露源码解读-从-Agent-循环到工具权限与上下文管理" class="headerlink" title="Claude Code 泄露源码解读 从 Agent 循环到工具权限与上下文管理"></a>Claude Code 泄露源码解读 从 Agent 循环到工具权限与上下文管理</h1><p>让编程助手解释一段代码，和让它把一个问题修好，是两种很不一样的体验。前者把答案写在对话框里就够了；后者要碰到真实文件、真实命令，还得面对用户随时插进来的修改。</p>
+<p>假设你给它这样一句话：“切换几次 3D 模型，页面就越来越卡。帮我找原因，修完跑一下项目现有的检查。”终端里开始搜索、读文件、改代码，看起来顺理成章。但这些动作靠什么衔接？读到一半文件变了怎么办？测试命令报错以后，是继续修，还是直接结束？</p>
+<p>这几个问题，比找一段神奇的系统提示词更吸引我。它们决定一个助手能不能在真实项目里持续工作，也正好是这次源码阅读的主线。</p>
+<p>2026 年 3 月 31 日，Claude Code 的一次 npm 发布意外暴露了内部源码。<code>@anthropic-ai/claude-code</code> 的 <code>2.1.88</code> 版本带上了不应公开的 source map，相关源码随后被保存和整理到多个仓库中。这次事件让开发者得以直接阅读一个实际编程代理的客户端实现。<a target="_blank" rel="noopener" href="https://www.infoq.com/news/2026/04/claude-code-source-leak/">事件报道</a></p>
+<p><strong>本文使用的泄露源码整理仓库：<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code">hujinbin/claude-code</a>。</strong> 想边读边对照，可以从这里打开目录；文中的源码引用另外固定到了具体提交，方便以后回看。</p>
+<p>分析基线是提交 <code>480314ded0d2f60bd854ff3e2661116d0f3a1b5e</code>，整理提交日期为 2026 年 4 月 13 日。本文以静态阅读为主：副本缺少完整构建配置和部分模块，下面的修复场景用于解释代码，不是一份实际运行报告；讨论范围也限定在这份实现。</p>
+<p>沿着代码走下去，会看到一套围绕模型组织起来的运行时：它维护消息，调度工具，检查权限，管理上下文，也负责把任务收住。这类系统在 Agent 工程里常被称为 <strong>Harness</strong>。这个词听起来抽象，放进上面的修复任务里就好理解了：模型决定下一步试什么，运行时把这个决定落到实际操作上，再把发生的事情告诉模型。</p>
+<h2 id="从-source-map-泄露说起"><a href="#从-source-map-泄露说起" class="headerlink" title="从 source map 泄露说起"></a>从 source map 泄露说起</h2><p>Source map 用来关联构建后的代码与原始源码，方便调试。根据生成方式，它可能包含原始源码内容，也可能暴露指向源码的路径或位置。因此，拿到相应调试产物，有时就能看到远比压缩后 JavaScript 更完整的实现，而无需重新推导源程序。<a target="_blank" rel="noopener" href="https://developer.mozilla.org/en-US/docs/Glossary/Source_map">Source map 说明</a></p>
+<p>这次泄露属于发布链路中的调试产物暴露。Anthropic 将事件归因于人为造成的发布打包失误。<a target="_blank" rel="noopener" href="https://www.axios.com/2026/03/31/anthropic-leaked-source-code-ai">公司回应</a></p>
+<p>这件事给开发者的提醒很具体：编译结果、调试产物和最终发布包，需要分别看待。调试文件对排查线上问题很有用，但“内部调试需要它”和“用户安装包应该带上它”是两回事。</p>
+<p>至于“Bun 默认生成 <code>.map</code>，忘写 <code>.npmignore</code> 就会泄露”的说法，细节还要分开看。Bun 当前文档列出的 <code>sourcemap</code> 默认值是 <code>none</code>；实际生成方式和打包范围取决于项目自己的配置。这份副本没有原始发布配置，因此下面重点研究泄露出来的实现。<a target="_blank" rel="noopener" href="https://bun.com/docs/bundler#sourcemap">Bun 构建文档</a></p>
+<p>本文把它作为泄露源码来读，并不把它称作官方主动开源。阅读对象是编程代理的客户端工程，范围也不延伸到模型权重或全部云端服务。</p>
+ <a id="more"></a>  
+
+<h2 id="五十多万行代码该从哪里读起"><a href="#五十多万行代码该从哪里读起" class="headerlink" title="五十多万行代码该从哪里读起"></a>五十多万行代码该从哪里读起</h2><p>按当前副本的 <code>src/</code> 目录统计，可以得到下面这些数字：</p>
+<table>
+<thead>
+<tr>
+<th>统计项</th>
+<th align="right">本地结果</th>
+<th>口径</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>文件总数</td>
+<td align="right">1,902</td>
+<td><code>src/</code> 下所有文件</td>
+</tr>
+<tr>
+<td><code>.ts</code> 文件</td>
+<td align="right">1,332</td>
+<td>按扩展名统计</td>
+</tr>
+<tr>
+<td><code>.tsx</code> 文件</td>
+<td align="right">552</td>
+<td>按扩展名统计</td>
+</tr>
+<tr>
+<td><code>.js</code> 文件</td>
+<td align="right">18</td>
+<td>命令占位文件</td>
+</tr>
+<tr>
+<td>文本行数</td>
+<td align="right">512,685</td>
+<td>去除末尾内嵌 source map 注释行，包含空行与注释</td>
+</tr>
+<tr>
+<td><code>QueryEngine.ts</code></td>
+<td align="right">1,295 行</td>
+<td>当前副本的实际文本行数</td>
+</tr>
+<tr>
+<td><code>query.ts</code></td>
+<td align="right">1,729 行</td>
+<td>当前副本的实际文本行数</td>
+</tr>
+<tr>
+<td><code>main.tsx</code></td>
+<td align="right">4,683 行</td>
+<td>去除末尾内嵌 source map 注释行</td>
+</tr>
+</tbody></table>
+<p>这里按文本行统计，保留了空行、注释、类型声明和提示文本，只去掉 552 条末尾内嵌 source map 注释。数字描述的是当前整理副本的体积，并不等于有效业务代码量。</p>
+<p>顺手核对一个常见误读：<code>QueryEngine.ts</code> 在当前提交里是 1,295 行，Git 对象大小为 <strong>46,630 字节</strong>。网上出现过的“46,000 行”不能套在这个文件上。</p>
+<p>不过，读代码最难的也不是它有多少行。直接打开 <code>main.tsx</code> 从头翻，初始化、参数、兼容分支和各种功能会一起涌过来，很快就失去方向。对我来说，更有用的入口是一个朴素的问题：用户按下回车之后，接下来到底调用了谁？</p>
+<p>工具数量也要区分目录和运行时。<code>src/tools/</code> 中以 <code>Tool</code> 结尾的一级目录有 40 个，但 <code>getAllBaseTools()</code> 还包含按环境、功能开关和辅助函数决定是否加入的工具。连接 MCP 后，工具集合也会变化。因此，目录计数不能直接等同于某次会话中模型能调用的工具数。<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/tools.ts#L193">工具集合构建</a></p>
+<h2 id="先沿着一次请求往下走"><a href="#先沿着一次请求往下走" class="headerlink" title="先沿着一次请求往下走"></a>先沿着一次请求往下走</h2><p>这份代码使用 TypeScript，终端界面采用 React 与仓库内的 Ink 实现；入口能看到 <code>bun:bundle</code>，工具 Schema 使用 <code>zod/v4</code>，代码搜索接入 ripgrep，外部能力通过 MCP、LSP 等模块扩展。它们分别承担界面、构建、校验、搜索与协议集成，不能把所有模块都归为“模型 API 调用”。<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/ink.ts">终端渲染封装</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/tools/GrepTool/GrepTool.ts">Grep 工具</a></p>
+<p>先认清几个位置，后面就不用在目录里来回找了：</p>
+<table>
+<thead>
+<tr>
+<th>文件</th>
+<th>负责什么</th>
+<th>阅读时关注的问题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>src/entrypoints/cli.tsx</code></td>
+<td>启动分流与延迟加载</td>
+<td>为什么查询版本不需要加载整个应用</td>
+</tr>
+<tr>
+<td><code>src/main.tsx</code></td>
+<td>主程序编排</td>
+<td>不同运行方式如何被接起来</td>
+</tr>
+<tr>
+<td><code>src/screens/REPL.tsx</code></td>
+<td>交互终端中的查询与事件消费</td>
+<td>输入如何进入执行循环，结果如何显示</td>
+</tr>
+<tr>
+<td><code>src/QueryEngine.ts</code></td>
+<td>会话状态与 SDK 消息适配</td>
+<td>多次输入如何共享消息、文件缓存和用量</td>
+</tr>
+<tr>
+<td><code>src/query.ts</code></td>
+<td>模型与工具之间的循环</td>
+<td>一轮结束后为什么还要继续</td>
+</tr>
+<tr>
+<td><code>src/Tool.ts</code></td>
+<td>工具契约</td>
+<td>一个工具需要声明哪些行为</td>
+</tr>
+<tr>
+<td><code>src/services/tools/</code></td>
+<td>工具调度与执行</td>
+<td>校验、授权、并发和取消发生在哪里</td>
+</tr>
+<tr>
+<td><code>src/services/compact/</code></td>
+<td>上下文压缩</td>
+<td>历史越来越长之后如何继续工作</td>
+</tr>
+</tbody></table>
+<p>把这些模块放在一起，关系可以简化为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">CLI 入口 → main</span><br><span class="line">              ├─ 交互终端 REPL ───────────────┐</span><br><span class="line">              └─ SDK／无界面会话 QueryEngine ─┤</span><br><span class="line">                                             ↓</span><br><span class="line">                                       query 执行循环</span><br><span class="line">                                             ↓</span><br><span class="line">                       整理上下文 → 请求模型 → 接收响应</span><br><span class="line">                            ↑                    │</span><br><span class="line">                            │              是否包含工具调用</span><br><span class="line">                            │                    ↓</span><br><span class="line">                            └─ 工具结果 ← 校验、授权、执行</span><br></pre></td></tr></table></figure>
+<p>这里有个容易读错的地方：<strong>当前快照中的交互式 REPL 直接调用 <code>query()</code>，并没有统一经过 <code>QueryEngine</code>。</strong> <code>QueryEngine</code> 的注释也明确把未来接入 REPL 作为后续阶段。二者复用的是底层查询循环，不能根据类名推断它已经接管所有入口。 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/screens/REPL.tsx#L2793">REPL 查询入口</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/QueryEngine.ts#L175">QueryEngine 会话封装</a>。</p>
+<h2 id="启动入口先决定加载多少代码"><a href="#启动入口先决定加载多少代码" class="headerlink" title="启动入口先决定加载多少代码"></a>启动入口先决定加载多少代码</h2><p><code>entrypoints/cli.tsx</code> 的 <code>main()</code> 首先检查命令行参数。对于单独的 <code>--version</code>、<code>-v</code> 或 <code>-V</code>，它直接输出构建时写入的版本信息并返回。</p>
+<p>其余路径才会继续动态导入启动分析、配置、远程连接等模块；普通 CLI 路径最终导入 <code>../main.js</code>，再调用其中的 <code>main()</code>。</p>
+<p>这段代码不显眼，但很能体现终端工具的使用感受。查版本只需要一个字符串，如果还要等模型客户端、界面和工具定义全部初始化，用户会觉得这个命令笨重。一个大应用里，仍然有很多本该很快的小操作。入口先把这些请求分出去，再加载需要的部分。</p>
+<p>因此，这里的延迟加载具有明确的边界：先识别操作，再加载完成该操作所需的模块。源码中还能看到 <code>feature(...)</code> 包围的分支，注释说明部分分支会在构建时被消除。阅读这些路径时，需要同时考虑构建条件与运行条件。 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/entrypoints/cli.tsx#L34">CLI 启动分流</a>。</p>
+<h2 id="query-如何把一次提问变成多步任务"><a href="#query-如何把一次提问变成多步任务" class="headerlink" title="query 如何把一次提问变成多步任务"></a>query 如何把一次提问变成多步任务</h2><p><code>query.ts</code> 是理解整个执行过程的核心。导出的 <code>query()</code> 把执行交给内部 <code>queryLoop()</code>，后者通过 <code>while (true)</code> 驱动循环，并用 <code>State</code> 保存跨轮次状态。</p>
+<p>这些状态既包含消息和工具上下文，也包含轮次、压缩跟踪、输出截断恢复次数，以及本次继续执行的原因。它们回答的是同一个问题：<strong>下一次请求模型时，系统需要记住什么？</strong></p>
+<p>下面是帮助理解的伪代码，省略了恢复、排队和功能开关分支，不是原文件摘录：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">初始化消息与轮次状态</span><br><span class="line"></span><br><span class="line">循环：</span><br><span class="line">    整理工具输出和历史上下文</span><br><span class="line">    流式请求模型，逐步转发消息</span><br><span class="line">    收集响应中的工具调用</span><br><span class="line"></span><br><span class="line">    如果没有工具调用：</span><br><span class="line">        检查停止钩子及其他继续条件</span><br><span class="line">        满足结束条件时返回</span><br><span class="line"></span><br><span class="line">    校验、授权并执行工具</span><br><span class="line">    把模型响应和工具结果追加到历史</span><br><span class="line">    检查取消和轮次限制</span><br><span class="line">    携带新状态进入下一轮</span><br></pre></td></tr></table></figure>
+<p>把开头的 3D 场景问题放进来，可以想象这样一条执行轨迹。它只是帮助理解的例子，不是一份实际运行记录：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">用户：切换模型后越来越卡，检查并修复。</span><br><span class="line"></span><br><span class="line">第一轮模型 → 搜索模型切换、场景卸载相关代码。</span><br><span class="line">工具返回   → 找到组件、加载器和清理函数。</span><br><span class="line"></span><br><span class="line">第二轮模型 → 读取这些文件，查看资源由谁创建、是否共享。</span><br><span class="line">工具返回   → 提供实际代码，而不只是文件名。</span><br><span class="line"></span><br><span class="line">第三轮模型 → 提出有范围的编辑。</span><br><span class="line">工具返回   → 修改成功，或者指出文件已经变化、替换不明确。</span><br><span class="line"></span><br><span class="line">第四轮模型 → 根据修改结果运行现有检查。</span><br><span class="line">工具返回   → 退出码、测试结果或错误信息。</span><br><span class="line"></span><br><span class="line">后续模型   → 决定继续调整，或说明已完成什么、还没有验证什么。</span><br></pre></td></tr></table></figure>
+<p>这条轨迹没有要求模型提前写好完整剧本。第二轮能看见什么，取决于第一轮工具究竟找到了什么；编辑能不能成立，也要等运行时返回结果。一句用户输入，背后可以对应多次模型请求。</p>
+<p>因此，工具返回“没有找到”、命令退出非零，或者文件已经变化，都是下一步决策所需的事实。运行时若把它们吞掉，只留一句“执行完毕”，模型就失去了修正方向的机会。</p>
+<p>源码没有仅依赖响应中的 <code>stop_reason</code> 来判定是否需要工具后续处理。它会检查实际收到的 <code>tool_use</code> 内容块，收集调用，并设置 <code>needsFollowUp</code>。文件中的注释直接指出，单独依赖 <code>stop_reason === &#39;tool_use&#39;</code> 不可靠。</p>
+<p>这个细节比它看起来更重要。代理接的是外部响应，字段、事件和实际内容之间可能出现不一致；循环最终需要有一个明确的推进依据。否则界面可能已经显示了一项工具操作，运行时却认为这一轮没有后续工作。 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/query.ts#L199">循环状态与初始化</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/query.ts#L825">工具调用收集</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/query.ts#L1704">进入下一轮</a>。</p>
+<h2 id="异步生成器让执行过程持续可见"><a href="#异步生成器让执行过程持续可见" class="headerlink" title="异步生成器让执行过程持续可见"></a>异步生成器让执行过程持续可见</h2><p><code>query()</code> 使用 <code>async function*</code>，调用方通过 <code>for await ... of</code> 消费事件。返回给外层的内容包括模型流事件、消息、工具进度以及上下文边界等。</p>
+<p>站在终端前等一个任务时，“正在做什么”很影响体验。搜索已经找到文件，测试还在运行，模型正在输出解释，这几件事最好及时让人看见。异步生成器可以逐步交出事件，界面不必等整项任务结束才拿到一个结果对象。</p>
+<p>同样的分层还给了界面更多余地。终端可以折叠一组读取操作，SDK 可以映射成自己的消息格式，而执行循环继续关心任务状态。展示方式变化时，不必跟着重写整套工具执行逻辑。</p>
+<p>交互式 REPL 收到事件后交给 <code>onQueryEvent()</code>。<code>QueryEngine</code> 则在消费同一个循环的同时，维护会话消息、文件读取缓存、使用量和 SDK 输出。这使底层的执行逻辑能够服务不同的外层交互方式。</p>
+<p>底层模型请求也保留了一个小而明确的依赖接口。<code>query/deps.ts</code> 定义的 <code>QueryDeps</code> 包含 <code>callModel</code>、<code>microcompact</code>、<code>autocompact</code> 和 <code>uuid</code>。生产环境把 <code>callModel</code> 绑定到 <code>queryModelWithStreaming</code>，调用者也可以传入替代实现。</p>
+<p>这也给测试留下了一个很实际的切口。比如，让假的模型第一次返回读取调用、第二次返回最终答案，就能检查工具结果有没有正确回灌；让压缩依赖在某次请求前触发，就能观察循环有没有丢掉必要状态。相比每次都请求真实模型，这种结构更适合复现那些只在边缘路径出现的问题。 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/query/deps.ts">查询依赖接口</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/QueryEngine.ts#L675">SDK 消费查询事件</a>。</p>
+<h2 id="CLAUDE-md-如何变成模型看得见的约定"><a href="#CLAUDE-md-如何变成模型看得见的约定" class="headerlink" title="CLAUDE.md 如何变成模型看得见的约定"></a>CLAUDE.md 如何变成模型看得见的约定</h2><p>一个项目里的约定，往往比一段通用提示更能影响修改质量。场景单位是米还是厘米，贴图由组件释放还是资源管理器统一持有，Python 接口允许哪些字段为空，这些信息通常藏在项目文档和已有实现里。</p>
+<p><code>context.ts</code> 的 <code>getUserContext()</code> 提供了一个入口：读取并筛选记忆文件，把整理后的内容放到 <code>claudeMd</code> 字段，再交给请求组装逻辑。沿这条路径看，<code>CLAUDE.md</code> 最终变成请求中的文本，不会因为文件叫这个名字，就自动成为一种模型能力。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">项目约定与规则文件</span><br><span class="line">    ↓ getMemoryFiles / getClaudeMds</span><br><span class="line">userContext.claudeMd</span><br><span class="line">    ↓ prependUserContext</span><br><span class="line">带来源与提醒标记的上下文消息</span><br><span class="line">    ↓</span><br><span class="line">当前模型请求</span><br></pre></td></tr></table></figure>
+<p>这里有个技术细节：这条路径会把用户上下文包装成带 <code>&lt;system-reminder&gt;</code> 的元用户消息，再前置到历史中，不能笼统地写成“所有规则都放进 system role”。不同来源与用途的文本，在请求里有各自的组织方式。<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/context.ts#L155">用户上下文</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/utils/api.ts#L449">请求前置逻辑</a></p>
+<p>规则还可以随着工作范围逐步补进来。读取文件会记录相关路径，后续附件处理再沿目标路径查找子目录的 <code>CLAUDE.md</code> 和适用规则。对于前后端放在同一仓库的项目，这很好理解：读到前端目录时，才有机会带入那里的场景约定；切到后端文件，才需要相应的 API 和数据访问规则。实际加载仍受设置和路径条件影响，不是每轮把整个仓库的文档重新扫一遍。<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/utils/attachments.ts#L1779">嵌套规则加载</a></p>
+<p>规则内容也要去重，否则围绕几个文件来回读取，就可能反复注入相同文档。代码还区分“读过整理后的规则”和“完整读过磁盘原文件”：如果注入内容经过删减或截断，就标记为局部视图，编辑前仍要真正读取文件。这与后面文件编辑的状态检查接了起来。<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/utils/attachments.ts#L1718">规则去重与读取状态</a></p>
+<p>至于在文档里写一句“所有命令直接执行”，它不会直接跳过工具层的权限函数。项目规则可以影响模型的选择，在某些自动模式中也会成为权限分类的判断材料，但最终仍需要走运行时的决策路径。自然语言约定和可执行权限要相互配合，不能当成同一种配置。</p>
+<h2 id="工具契约同时描述执行与约束"><a href="#工具契约同时描述执行与约束" class="headerlink" title="工具契约同时描述执行与约束"></a>工具契约同时描述执行与约束</h2><p>如果只把工具看作一个可调用函数，很容易忽略代理运行时真正需要的信息。<code>Tool.ts</code> 给出的契约更完整：</p>
+<table>
+<thead>
+<tr>
+<th>契约成员</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>inputSchema</code></td>
+<td>校验输入结构与类型</td>
+</tr>
+<tr>
+<td><code>validateInput()</code></td>
+<td>检查当前环境下，这组输入是否可执行</td>
+</tr>
+<tr>
+<td><code>checkPermissions()</code></td>
+<td>提供工具自身的权限判断</td>
+</tr>
+<tr>
+<td><code>isConcurrencySafe()</code></td>
+<td>声明当前输入是否允许与其他调用并发</td>
+</tr>
+<tr>
+<td><code>isReadOnly()</code></td>
+<td>声明当前操作是否只读</td>
+</tr>
+<tr>
+<td><code>call()</code></td>
+<td>执行实际操作</td>
+</tr>
+<tr>
+<td><code>maxResultSizeChars</code></td>
+<td>声明工具结果的大小边界</td>
+</tr>
+</tbody></table>
+<p>拿编辑工具来说，<code>file_path</code> 是字符串，只说明参数的形状对了。文件是否存在、是否已经读取、是否被其他程序修改，是下一层问题；当前会话能否写入这个位置，又是权限问题。</p>
+<p>如果把这些判断都塞进 <code>call()</code>，每个工具就会各管一摊：有的先弹确认再发现参数错了，有的直接抛异常，有的又悄悄返回空结果。把契约拆开之后，执行器能安排统一的顺序，界面也更容易告诉用户操作卡在哪一步。</p>
+<p>工具结果也有自己的边界。契约说明，当结果超过指定大小时，可以持久化到文件，并向模型提供预览和文件路径。部分自行限制输出的工具可以使用 <code>Infinity</code> 避免再次转存，否则可能出现“读取文件结果过大，被转存后又要读取”的循环。 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/Tool.ts#L362">Tool 契约</a>。</p>
+<h2 id="权限检查发生在真正调用工具之前"><a href="#权限检查发生在真正调用工具之前" class="headerlink" title="权限检查发生在真正调用工具之前"></a>权限检查发生在真正调用工具之前</h2><p><code>services/tools/toolExecution.ts</code> 中的执行流程，把模型提出的调用逐步转换为实际动作。可以把其中的主要检查理解为下面这条链路，具体路径还包含钩子结果合并和错误处理：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">模型提出工具调用</span><br><span class="line">    ↓</span><br><span class="line">inputSchema.safeParse</span><br><span class="line">    ↓</span><br><span class="line">工具 validateInput</span><br><span class="line">    ↓</span><br><span class="line">PreToolUse 钩子</span><br><span class="line">    ↓</span><br><span class="line">合并钩子与 canUseTool 的权限决策</span><br><span class="line">    ↓</span><br><span class="line">允许执行后调用 tool.call</span><br><span class="line">    ↓</span><br><span class="line">结果处理与 PostToolUse 钩子</span><br></pre></td></tr></table></figure>
+<p>Schema 校验失败时，运行时会生成带 <code>is_error: true</code> 的 <code>tool_result</code>，并通过 <code>tool_use_id</code> 关联原始调用。于是，参数错误也能成为模型下一轮可见的信息。</p>
+<p>可以把 <code>tool_use_id</code> 理解成一次操作的回执编号。同一轮如果既读文件又执行命令，模型需要知道哪份结果对应哪次调用。只把一堆输出按到达顺序堆回去，遇到并发、取消或重试时就很容易串线。这也是为什么工具执行层看起来比“调用一个函数”复杂很多。</p>
+<p>这里的 <code>checkPermissions()</code>、<code>canUseTool</code> 与钩子分别参与不同层面的判断。把它们简单理解成“每次操作都会弹确认框”并不准确：执行过程中会综合已有决策和权限上下文，决定允许、拒绝或进一步询问。</p>
+<p>同样，这条链路说明的是应用层如何控制工具调用。仅凭这些检查，不能推导出操作系统层面的沙箱隔离保证；后者需要继续研究具体命令工具和沙箱实现。 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/services/tools/toolExecution.ts#L615">输入校验</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/services/tools/toolExecution.ts#L920">权限决策合并</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/services/tools/toolExecution.ts#L1207">实际工具调用</a>。</p>
+<h2 id="并发依据工具声明决定"><a href="#并发依据工具声明决定" class="headerlink" title="并发依据工具声明决定"></a>并发依据工具声明决定</h2><p>当模型一次提出多个工具调用，调度器需要判断哪些可以并行，哪些必须等待。</p>
+<p>非流式路径中的 <code>toolOrchestration.ts</code> 会按调用顺序分组。相邻且被工具声明为并发安全的调用进入同一批次，其他调用串行执行。判断之前先做输入解析；解析失败，或者 <code>isConcurrencySafe()</code> 抛出异常，都会按不可并发处理。</p>
+<p>假设有这样一组操作，且两个读取操作都被声明为并发安全：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">读取 A ─┐</span><br><span class="line">        ├─ 同一并发批次 → 编辑 A → 读取 C</span><br><span class="line">读取 B ─┘</span><br></pre></td></tr></table></figure>
+<p>编辑操作构成执行边界，后面的读取不会被提前合并到前面的批次。这个顺序有实际意义：编辑后的文件才是后续读取想看到的内容。如果为了加速，把后面的读取也一起发出去，就可能拿到旧状态。该路径的并发上限读取 <code>CLAUDE_CODE_MAX_TOOL_USE_CONCURRENCY</code>，默认值为 10。</p>
+<p>当流式工具执行开关启用时，<code>StreamingToolExecutor</code> 可以在收到可执行的完整工具调用后开始调度，让部分工具工作与剩余模型输出重叠。它同样依据并发安全声明控制执行，非并发调用需要独占执行位置，并单独处理进度、完成结果和取消。</p>
+<p>这也解释了为什么 <code>isReadOnly()</code> 与 <code>isConcurrencySafe()</code> 要分别存在。只读描述操作的副作用，并发安全描述它能否与其他调用同时运行。调度器实际使用的是后者。 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/services/tools/toolOrchestration.ts">批次调度</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/services/tools/StreamingToolExecutor.ts#L73">流式调度器</a>。</p>
+<h2 id="用户取消以后还有一笔账要收完"><a href="#用户取消以后还有一笔账要收完" class="headerlink" title="用户取消以后还有一笔账要收完"></a>用户取消以后还有一笔账要收完</h2><p>顺利执行时，模型调用、工具结果和下一轮请求自然连在一起。真正容易出问题的是中途停下：模型已经提出两个工具调用，第一个有结果了，第二个还在跑，这时用户取消了任务。</p>
+<p>界面当然应该尽快停下来，但消息历史不能只留两条调用、少一份结果。下一次继续任务时，系统还需要知道哪些操作完成了、哪些没有完成。<code>query.ts</code> 因此会处理未完成调用的错误结果；流式执行路径还会消费执行器剩余的结果，让取消状态有机会转成带关联标识的工具结果。</p>
+<p>这让我觉得，“取消”更像一次需要收尾的状态迁移。收到信号之后，运行时要让后续流程停下来，还要留下可解释的记录。遇到模型或运行时错误时，代码也会区分真实错误和用户中断，避免把服务故障显示成一句误导人的“用户已取消”。<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/query.ts#L123">错误结果补齐</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/query.ts#L1011">流式取消处理</a></p>
+<p>回退重试也有类似的问题。旧的流式尝试可能已经产生了消息和工具调用，新尝试又有一套新的标识。如果只重新请求模型，旧执行器晚到的结果就可能混进来。代码会向外发送旧消息失效的控制事件，清空当前尝试的收集状态，丢弃旧执行器并创建新的执行器。不同外层入口对这些控制事件的处理并不完全一样，但循环需要把新旧尝试的结果分开。<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/query.ts#L710">流式回退路径</a></p>
+<p>不过，丢弃旧结果和撤销实际操作之间还隔着很远。执行器的 <code>discard()</code> 首先改变的是后续调度与结果交付；已经写入的文件、已经完成的命令，不能仅凭一个标志就回到之前的状态。看到“已取消”时，仍然需要检查工作目录的实际变化。源码在这里提供的是收尾和消息管理机制，不是一个覆盖所有工具的自动回滚按钮。</p>
+<h2 id="文件编辑保护围绕读取时的状态展开"><a href="#文件编辑保护围绕读取时的状态展开" class="headerlink" title="文件编辑保护围绕读取时的状态展开"></a>文件编辑保护围绕读取时的状态展开</h2><p><code>FileEditTool</code> 是一个很适合细读的例子。模型给出 <code>old_string</code> 和 <code>new_string</code>，只是编辑流程的起点。</p>
+<p>在常规的已有文件替换路径中，工具会检查读取状态：文件是否已经被读过，缓存是否属于不满足要求的局部视图，以及读取之后文件是否发生变化。它还会检查旧字符串是否存在；如果出现多个匹配，而 <code>replace_all</code> 没有开启，就要求提供更明确的上下文。</p>
+<p>这不是少见的边角情况。助手在找问题，用户也可能顺手改了同一个文件；编辑器保存时触发格式化，文件内容又变了一次。对人来说，这些操作都发生在同一个工作目录；对模型来说，它手里可能还是半分钟前读到的那段文本。</p>
+<p>再回到场景卸载的例子：模型准备替换一个 <code>disposeScene()</code>，但用户刚给共享贴图补了引用计数。如果继续按旧文本覆盖，眼前的泄漏也许修了，新的资源共享逻辑却被抹掉。运行时至少需要识别“此前读到的版本可能已经不适用”，让模型重新观察，再决定怎样改。</p>
+<p>更细的一点发生在 <code>call()</code> 中。工具在准备写入时再次读取当前文件，重新检查读取缓存与修改时间。修改时间表明文件可能变化时，完整读取会再比较内容；如果只是时间戳变了、内容仍然相同，可以继续，确认内容变化后则拒绝写入。这个机制依赖读取记录与修改时间，不能把它理解为对任何外部改动都能进行无遗漏检测。</p>
+<p>重新检查与同步写入之间还刻意避免了 <code>await</code>，减少同一 JavaScript 执行环境中其他异步任务插入的机会。这个局部安排有助于降低竞态，但不等于获得了跨进程文件锁，也不能据此声称整个编辑过程具有数据库事务保证。</p>
+<p>写入完成之后，工具还会更新读取缓存，并通知 LSP 与编辑器相关模块。这样，后续编辑与诊断能够基于新的文件内容继续工作。</p>
+<p>从设计上看，这接近乐观并发控制：先允许任务推进，到了写入点，再核对此前观察到的状态是否仍然适用。我更愿意把这种检查看作编辑工具的基本能力。用户和助手共用一份目录，彼此的修改本来就可能穿插发生，不能把协调责任全部交给模型记住一句提醒。 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/tools/FileEditTool/FileEditTool.ts#L275">编辑输入校验</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/tools/FileEditTool/FileEditTool.ts#L442">写入前的再次检查</a>。</p>
+<h2 id="上下文管理是循环中的资源调度"><a href="#上下文管理是循环中的资源调度" class="headerlink" title="上下文管理是循环中的资源调度"></a>上下文管理是循环中的资源调度</h2><p>代理运行几轮之后，历史消息会快速膨胀。一次仓库搜索可能返回几十处匹配，一次构建失败能打印几百行堆栈，再读几个大文件，窗口里就塞满了观察材料。</p>
+<p>麻烦的是，这些材料并不具有相同的价值。最初那段已经确认无关的构建日志，和刚读到的清理函数，不应该永久占用同样重要的位置。用户感受到的是助手“还能不能记住前面做了什么”，运行时面对的却是具体的容量、成本和延迟。</p>
+<p><code>query.ts</code> 在模型请求之前安排了多层整理。其中先执行工具结果预算处理，再调用微压缩，随后检查自动压缩；部分额外处理由功能开关控制。</p>
+<p>工具结果预算首先限制的是单次工具观察带来的体积。完整内容可以保存在外部文件中，模型保留继续检索的入口，从而减少大段日志对当前窗口的占用。</p>
+<p><code>microCompact.ts</code> 的处理更细。当前实现先尝试按时间间隔触发的旧工具结果清理；特定条件下还会进入受 <code>CACHED_MICROCOMPACT</code> 控制的缓存编辑路径。如果条件不满足，也可能原样返回消息。因此，调用了微压缩函数，不代表本轮一定删减了上下文。</p>
+<p>当上下文压力继续增加，<code>autoCompact.ts</code> 会根据模型窗口、输出预留和缓冲区判断是否压缩。触发后，它先尝试会话记忆压缩路径，未得到结果时再调用常规的对话压缩。</p>
+<p>这里还有一个值得借鉴的失败控制：常规 <code>compactConversation()</code> 路径连续抛错达到代码设定的阈值 3 后，会跳过后续自动压缩尝试，避免对无法恢复的上下文反复发起同样的请求。压缩流程本身也需要退出边界。</p>
+<p>这些实现表达了一个清楚的取舍：当前决策需要什么，就尽量保留什么；体积过大的观察、已经陈旧的输出和较早的过程信息，则通过外部存储、清理或摘要来管理。</p>
+<p>压缩也有代价。摘要可以保留“模型卸载逻辑已调整，下一步验证切换行为”，却未必保留每一条日志、每一个临时变量名。如果后续修改又依赖某段精确代码，重新读文件通常比假定模型完整记得它更可靠。这里影响的已经不只是请求能否放得下，还包括代理在失去细节之后怎样恢复观察。 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/query.ts#L366">请求前的上下文整理</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/services/compact/microCompact.ts#L253">微压缩的条件分支</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/services/compact/autoCompact.ts#L241">自动压缩与失败控制</a>。</p>
+<h2 id="屏幕上的历史和下一次模型输入并不相同"><a href="#屏幕上的历史和下一次模型输入并不相同" class="headerlink" title="屏幕上的历史和下一次模型输入并不相同"></a>屏幕上的历史和下一次模型输入并不相同</h2><p>看到界面里还留着一大段日志，很容易以为模型下一轮也会原样收到它。源码里的请求组装并不是这样工作。</p>
+<p><code>query.ts</code> 会先从压缩边界之后的消息构造 <code>messagesForQuery</code>，再做工具结果预算和压缩处理。发送 API 前，另有消息规范化步骤。这意味着，界面上供人阅读的记录、磁盘中用于恢复的日志，以及下一次模型请求，承担的是不同用途。<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/query.ts#L365">请求消息视图</a></p>
+<p>会话存储也包含关系信息。比如消息之间的 <code>parentUuid</code>，以及压缩边界后的保留片段如何连接。恢复工作需要利用这些结构，不能只把 JSONL 按行读出来，再一股脑发送给模型。<code>QueryEngine</code> 还会按相应路径整理自己的内存历史，保存过的记录与当前内存数组也不必始终相等。<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/utils/sessionStorage.ts#L1024">日志中的消息关系</a></p>
+<p>有一个很细的缓存处理也体现了这种区分：给外层观察者展示工具输入时，可以使用补充字段后的副本；循环则保留原始模型消息，避免额外修改导致后续请求的缓存前缀发生变化。展示需要更好读，模型历史需要维持协议和缓存上的一致性，两者通过副本衔接。<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/query.ts#L742">消息副本与缓存</a></p>
+<p>所以，排查代理“为什么没有记住前文”时，可以先问得更具体一些：那条信息是否仍然在本轮请求里？是不是已经被压缩、替换，或者只保留在日志中？把这些视图区分开，问题才有机会落到可检查的实现上。</p>
+<h2 id="子代理复用同一个执行循环"><a href="#子代理复用同一个执行循环" class="headerlink" title="子代理复用同一个执行循环"></a>子代理复用同一个执行循环</h2><p>读到 <code>AgentTool</code> 时，很容易预期会出现另一套任务执行引擎。但沿着 <code>tools/AgentTool/runAgent.ts</code> 往下看，子代理最终仍然调用 <code>query()</code>。</p>
+<p>差别主要在进入循环之前如何构造上下文。子代理拥有自己的 <code>agentId</code>、初始消息、工具选项和读取缓存；是否继承父级历史、如何连接取消信号、哪些状态与父级共享，则由具体运行路径决定。</p>
+<p>当传入 <code>forkContextMessages</code> 时，代码会先过滤不完整的工具调用，再与当前任务提示组合。这样可以避免把缺少配对结果的调用历史直接带入新请求。文件读取状态也会根据是否继承上下文，选择克隆已有缓存或创建新缓存。</p>
+<p>同步与后台执行在状态共享、取消信号和生命周期上还有差异。<strong>子代理拥有独立的对话上下文，并不自动意味着拥有独立文件系统或操作系统进程。</strong> 是否使用 worktree 等隔离方式，需要继续检查对应的隔离选项与执行路径。</p>
+<p>复用同一个循环的好处很直接：工具校验、上下文压缩、轮次限制和错误处理能够沿用已有机制。新增代理类型时，主要变化集中在任务定义、提示、工具范围和上下文构造。</p>
+<p>假设一个任务既涉及 Three.js 的模型展示，又涉及 Python 返回的资源字段，让两个子任务分别梳理前端使用点和后端响应模型，是容易理解的分工。把所有父级历史原封不动塞给每个子任务，往往会带上很多无关信息；完全不传上下文，又可能让它们重复探索。因此，上下文继承是需要做选择的接口，不能只用“开几个并行任务”来理解。</p>
+<p>同样，两个分析任务可以独立，不代表它们对同一份文件的编辑就天然互不干扰。消息隔离、工作目录隔离和文件写入协调，需要分别考虑。 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/tools/AgentTool/runAgent.ts#L368">子代理上下文准备</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/tools/AgentTool/runAgent.ts#L748">子代理调用 query</a>。</p>
+<h2 id="Undercover-模式究竟在做什么"><a href="#Undercover-模式究竟在做什么" class="headerlink" title="Undercover 模式究竟在做什么"></a>Undercover 模式究竟在做什么</h2><p>泄露源码中有一个容易引起讨论的文件：<code>utils/undercover.ts</code>。名字有戏剧性，但看具体行为，比围绕名字猜测更有价值。</p>
+<p>这套逻辑面向 <code>USER_TYPE === &#39;ant&#39;</code> 的内部构建分支。满足条件时，它会向提交和 PR 相关提示加入约束，把默认归属文案置空，并在相关环境提示中省略模型身份，目的是减少内部模型代号、项目名或工具信息出现在外部贡献内容里。</p>
+<p>自动判断依据是仓库远程地址与内部允许名单的匹配结果，不是查询 GitHub 上所有仓库的公开或私有属性。只有明确归类为内部仓库时，自动路径才关闭；未确认或其他分类采用开启的保守默认值。普通外部构建分支在这个函数中返回关闭。</p>
+<p>因此，准确的理解是：<strong>它针对内部使用者向外部仓库贡献时的文案和归属信息，增加提示约束及处理逻辑。</strong> 它不是代码上传扫描器、发布产物检查器，也不能阻止 npm 包意外带上 source map。</p>
+<p>它和这次泄露放在一起，当然会让人觉得有点讽刺：代码里已经在小心处理提交文案中的内部信息，发布链路却把调试材料带了出去。不过，把两件事拆开看，教训反而更清楚。提交文案的约束、发布包的内容检查，各自都需要有人负责，前一层做得细，并不会自动覆盖后一层。<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/utils/undercover.ts#L28">Undercover 判断</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/utils/attribution.ts#L52">归属文案处理</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/utils/commitAttribution.ts#L88">仓库分类</a></p>
+<h2 id="功能开关不能直接当成上线清单"><a href="#功能开关不能直接当成上线清单" class="headerlink" title="功能开关不能直接当成上线清单"></a>功能开关不能直接当成上线清单</h2><p>泄露代码让内部条件分支也变得可见。<code>feature(...)</code>、构建时替换和运行时开关，都会影响某段逻辑是否进入最终产品、是否在当前会话启用。</p>
+<p>例如，入口的部分分支使用 <code>bun:bundle</code> 的 <code>feature()</code>；<code>undercover.ts</code> 的注释则说明，内部环境判断会在构建过程中被常量折叠，外部构建可消除相关分支。另一些模块从 GrowthBook 获取运行时功能值。</p>
+<p>一个具体例子是 <code>buddy/</code> 中的终端伙伴。<code>companion.ts</code> 会根据用户身份与固定种子材料生成确定性的外观属性，再与保存的配置组合。这是一种把身份、外观和持久化边界分开的实现；但相关命令、提示与界面还有开关和依赖，单看文件存在并不能证明完整功能已经对用户开放。<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/buddy/companion.ts#L91">伙伴属性生成</a></p>
+<p>读到这些代码，可以确认源码中存在对应的实现和实验路径；要判断某项能力是否对某类用户开放，还需要知道实际构建与配置。把所有条件分支都称为“已上线能力”或“确定的未来路线图”，都会超出这份代码能够证明的范围。 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/entrypoints/cli.tsx#L55">构建分支示例</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/services/analytics/growthbook.ts">运行时功能值模块</a></p>
+<h2 id="结束条件决定任务能否收住"><a href="#结束条件决定任务能否收住" class="headerlink" title="结束条件决定任务能否收住"></a>结束条件决定任务能否收住</h2><p>如果执行循环只考虑“继续调用工具”，长任务就可能因为错误或重复请求一直运行。<code>query.ts</code> 中大量分支都在处理如何结束，或者如何有条件地再尝试一次。</p>
+<p>能直接看到的退出原因包括取消、工具阶段中止、轮次达到上限、上下文过长以及模型错误。没有新工具调用时，也会继续检查停止钩子；钩子产生阻塞信息后，循环可能把这些信息追加到上下文，再发起一次请求。</p>
+<p>输出截断恢复同样有次数控制。部分恢复和继续路径还受到功能开关影响。不能把它概括为“模型没有调用工具就立刻结束”，也不能把它理解成“失败后无限重试”。当没有新工具调用、继续条件也不再成立时，循环结束，外层将已有助手消息呈现给用户。</p>
+<p>还有一个阅读上的细节：内部返回的 <code>reason: &#39;completed&#39;</code> 不应直接翻译成“用户任务已经成功完成”。源码在某些已经输出 API 错误消息的路径上，也会用这个原因结束循环。外层判断结果时，需要结合消息内容与自身的结果映射。</p>
+<p>对运行时来说，停止是一次状态决策；对用户来说，成功还需要有正确的代码、可检查的执行结果，以及明确说明的未完成事项。二者应当在实现与产品表达中分别处理。 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/query.ts#L1254">停止钩子与结束分支</a>、<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/query.ts#L1704">轮次限制</a>。</p>
+<h2 id="自己实现-Agent-时可以借鉴什么"><a href="#自己实现-Agent-时可以借鉴什么" class="headerlink" title="自己实现 Agent 时可以借鉴什么"></a>自己实现 Agent 时可以借鉴什么</h2><p>如果要自己做一个面向 Three.js 和 Python 项目的 Agent CLI，我会先把范围收在一条能跑通的执行链路里：读用户输入，请求模型，解析工具调用，经过校验和授权执行，再把结果送回去。先让它完成一个小改动，并能解释自己到底做了什么。</p>
+<p>然后给这条链路制造几个不顺利的场景：模型传了错误参数，用户拒绝命令，文件在读取后变化，接口输出到一半断开，测试没有通过。观察这些情况下历史有没有损坏、结果有没有串线、修改有没有误覆盖。这样补出来的能力，往往比再增加十个工具更快改善实际体验。</p>
+<p>项目规则也应该尽早明确。例如，Three.js 资源由谁持有和释放，场景坐标使用什么单位；Python 后端沿用哪个框架，接口字段怎么验证，现有测试怎样运行。这些信息帮助模型做出适合项目的选择，具体执行仍然要经过运行时边界。</p>
+<p>至于子代理、后台任务和更复杂的记忆策略，可以在基础链路稳定之后逐步加入。当前源码中，主查询和子代理复用 <code>query()</code> 的做法就很值得借鉴：先把执行机制集中起来，再扩展任务的组织方式。</p>
+<p>读到这里，再回看“五十多万行”这个数字，注意力会发生变化。真正值得带走的，可能是一个写入前的复查、一组被认真配对的工具结果，或者一次失败后的停止判断。这些细节单独看都很普通，连在一起，才让模型有机会在一个真实项目里连续工作。</p>
+<h2 id="源码阅读顺序"><a href="#源码阅读顺序" class="headerlink" title="源码阅读顺序"></a>源码阅读顺序</h2><p>源码整理仓库仍放在这里，方便收藏和对照：<a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code">hujinbin/claude-code</a>。建议按下面的顺序继续阅读，文件链接都固定在本文分析的提交：</p>
+<ol>
+<li><a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/entrypoints/cli.tsx">entrypoints/cli.tsx</a>：理解启动分流与动态导入。</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/query.ts">query.ts</a>：先看状态、模型调用、工具结果追加和结束条件。</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/Tool.ts">Tool.ts</a> 与 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/services/tools/toolExecution.ts">toolExecution.ts</a>：理解工具契约和执行边界。</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/tools/FileEditTool/FileEditTool.ts">FileEditTool.ts</a>：观察具体工具如何保护状态一致性。</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/services/compact/autoCompact.ts">autoCompact.ts</a> 与 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/tools/AgentTool/runAgent.ts">runAgent.ts</a>：理解长任务与子代理如何复用这套循环。</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/context.ts">context.ts</a> 与 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/claude-code/blob/480314ded0d2f60bd854ff3e2661116d0f3a1b5e/src/utils/attachments.ts">attachments.ts</a>：追踪项目约定如何随着任务进入上下文。</li>
+</ol>
+</div><div class="article-licensing box"><div class="licensing-title"><p>Claude Code 泄露源码解读,从 Agent 循环到工具权限与上下文管理</p><p><a href="https://hjb.leheavengame.com/2026/08/07/Claude-Code-泄露源码解读-从-Agent-循环到工具权限与上下文管理/">https://hjb.leheavengame.com/2026/08/07/Claude-Code-泄露源码解读-从-Agent-循环到工具权限与上下文管理/</a></p></div><div class="licensing-meta level is-mobile"><div class="level-left"><div class="level-item is-narrow"><div><h6>作者</h6><a href="https://hjb.leheavengame.com"><p>hujinbin</p></a></div></div><div class="level-item is-narrow"><div><h6>发布于</h6><p>2026-08-07</p></div></div><div class="level-item is-narrow"><div><h6>更新于</h6><p>2026-11-11</p></div></div><div class="level-item is-narrow"><div><h6>许可协议</h6><p><a class="icon" rel="noopener" target="_blank" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a><a class="icon" rel="noopener" target="_blank" title="Attribution" href="https://creativecommons.org/licenses/by/4.0/"><i class="fab fa-creative-commons-by"></i></a><a class="icon" rel="noopener" target="_blank" title="Noncommercial" href="https://creativecommons.org/licenses/by-nc/4.0/"><i class="fab fa-creative-commons-nc"></i></a></p></div></div></div></div></div><div class="recommend-area"><div class="recommend-post"><span class="is-size-6 has-text-grey has-mr-7"># 相关文章</span><br><span>  1.<a class="is-size-6" href="/2026/11/08/%E5%89%8D%E7%AB%AF%E6%80%8E%E4%B9%88%E7%94%A8-WebAssembly%EF%BC%9F%E4%BB%8E%E4%B8%80%E4%B8%AA%E6%B5%8F%E8%A7%88%E5%99%A8%E5%9B%BE%E7%89%87%E5%8E%8B%E7%BC%A9%E5%B7%A5%E5%85%B7%E8%AF%B4%E8%B5%B7/" target="_blank">前端怎么用 WebAssembly？从一个浏览器图片压缩工具说起</a><br></span><span>  2.<a class="is-size-6" href="/2026/03/25/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%8F%91-AI-Skill%EF%BC%9A%E6%89%93%E9%80%A0%E4%BD%A0%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA-AI-%E8%83%BD%E5%8A%9B%E6%89%A9%E5%B1%95/" target="_blank">从零开发 AI Skill：打造你的第一个 AI 能力扩展</a><br></span><span>  3.<a class="is-size-6" href="/2026/03/08/AI-%E6%97%B6%E4%BB%A3%E5%BF%85%E5%A4%87%E6%8A%80%E8%83%BD%E6%8C%87%E5%8D%97%EF%BC%9A%E4%BB%8E-Prompt-%E6%96%B0%E6%89%8B%E5%88%B0-AI-%E4%B8%93%E5%AE%B6%E7%9A%84%E8%BF%9B%E9%98%B6%E8%B7%AF/" target="_blank">AI 时代必备技能指南：从 Prompt 新手到 AI 专家的进阶路</a><br></span><span>  4.<a class="is-size-6" href="/2026/01/23/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3-Model-Context-Protocol%EF%BC%9A%E4%BB%8E%E9%9B%B6%E6%9E%84%E5%BB%BA-AI-%E7%9F%A5%E8%AF%86%E5%BA%93%E6%9C%8D%E5%8A%A1/" target="_blank">深入理解 Model Context Protocol：从零构建 AI 知识库服务</a><br></span><span>  5.<a class="is-size-6" href="/2025/12/25/%E4%BB%8E%E9%9B%B6%E6%89%93%E9%80%A0%E4%B8%80%E4%B8%AA%E8%B7%A8%E6%A1%86%E6%9E%B6%E9%80%9A%E7%94%A8%E7%9A%84-AI-Agent-%E6%8F%92%E4%BB%B6/" target="_blank">从零打造一个跨框架通用的 AI Agent 插件</a><br></span><span>  6.<a class="is-size-6" href="/2025/10/03/AI-Tools-%E5%AE%8C%E5%85%A8%E6%8C%87%E5%8D%97%EF%BC%9A%E4%BB%8E%E9%80%89%E6%8B%A9%E5%88%B0%E9%9B%86%E6%88%90%E7%9A%84%E5%85%A8%E9%93%BE%E8%B7%AF%E5%AE%9E%E8%B7%B5/" target="_blank">AI Tools 完全指南：从选择到集成的全链路实践</a><br></span><span>  7.<a class="is-size-6" href="/2025/08/09/Web3-js-v4-%E5%AE%8C%E6%95%B4%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" target="_blank">Web3.js v4 完整使用指南</a><br></span><span>  8.<a class="is-size-6" href="/2025/07/23/Three-js-%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98%EF%BC%9A%E5%9F%BA%E4%BA%8E-Vue3-%E5%81%9A%E4%B8%80%E4%B8%AA%E5%8F%AF%E6%8B%96%E6%8B%BD%E7%9A%84-3D-%E7%BC%96%E8%BE%91%E5%99%A8/" target="_blank">Three.js 入门实战：基于 Vue3 做一个可拖拽的 3D 编辑器</a><br></span></div></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/social-share.js/1.0.16/css/share.min.css"><div class="social-share"></div><script src="https://cdnjs.loli.net/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script></article></div><div class="card"><div class="card-content"><h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3><div class="buttons is-centered"><a class="button donate" data-type="alipay"><span class="icon is-small"><i class="fab fa-alipay"></i></span><span>支付宝</span><span class="qrcode"><img src="https://img.alicdn.com/imgextra/i4/2509590220/TB2GxhZfjnD8KJjSspbXXbbEXXa_!!2509590220.jpg" alt="支付宝"></span></a><a class="button donate" data-type="wechat"><span class="icon is-small"><i class="fab fa-weixin"></i></span><span>微信</span><span class="qrcode"><img src="https://img.alicdn.com/imgextra/i1/2509590220/TB2K0hPfdnJ8KJjSszdXXaxuFXa_!!2509590220.png" alt="微信"></span></a></div></div></div><nav class="post-navigation mt-4 level is-mobile"><div class="level-start"><a class="article-nav-prev level level-item link-muted" href="/2026/11/08/%E5%89%8D%E7%AB%AF%E6%80%8E%E4%B9%88%E7%94%A8-WebAssembly%EF%BC%9F%E4%BB%8E%E4%B8%80%E4%B8%AA%E6%B5%8F%E8%A7%88%E5%99%A8%E5%9B%BE%E7%89%87%E5%8E%8B%E7%BC%A9%E5%B7%A5%E5%85%B7%E8%AF%B4%E8%B5%B7/"><i class="level-item fas fa-chevron-left"></i><span class="level-item">前端怎么用 WebAssembly？从一个浏览器图片压缩工具说起</span></a></div><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/2026/03/25/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%8F%91-AI-Skill%EF%BC%9A%E6%89%93%E9%80%A0%E4%BD%A0%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA-AI-%E8%83%BD%E5%8A%9B%E6%89%A9%E5%B1%95/"><span class="level-item">从零开发 AI Skill：打造你的第一个 AI 能力扩展</span><i class="level-item fas fa-chevron-right"></i></a></div></nav><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><div class="card"><div class="card-content"><div class="title is-5">评论</div><div id="comment-container"></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/gitalk/1.6.0/gitalk.css"><script> $.getScript('/js/gitalk.min.js', function () {
+            var cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
+            var gitalk = new Gitalk({
+            language:'zh-CN',
+            id: 'e94dc3ac50765c0ff631fb8a18326ddc',
+            title: "Claude Code 泄露源码解读,从 Agent 循环到工具权限与上下文管理",
+            url: cleanUrl,
+            repo: 'myBlog',
+            owner: 'hujinbin',
+            clientID: '805d0c127d7edb5532bb',
+            clientSecret: '89de913bcdc87f3e47e916e5516f21ae8f0a69dd',
+            admin: ["hujinbin"],
+            createIssueManually: false,
+            distractionFreeMode: false,
+            perPage: 10,
+            pagerDirection: 'last',
+            labels: ["Gitalk"],
+            proxy: 'https://www.leheavengame.com/api/github/oauth/access_token',
+            
+            enableHotKey: true,
+            isLocked: false
+        })
+        gitalk.render('comment-container')});</script></div></div></div><div class="column column-left is-4-tablet is-4-desktop is-3-widescreen  order-1 is-sticky"><!--!--><div class="card widget" data-type="profile"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="avatar is-rounded" src="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg" alt="胡金斌"></figure><p class="title is-size-4 is-block" style="line-height:inherit;">胡金斌</p><p class="is-size-6 is-block">web前端开发工程师</p><p class="is-size-6 is-flex justify-content-center"><i class="fas fa-map-marker-alt mr-1"></i><span>浙江杭州</span></p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">文章</p><a href="/archives"><p class="title">58</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">分类</p><a href="/categories"><p class="title">0</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">标签</p><a href="/tags"><p class="title">63</p></a></div></div></nav><div class="level"><a class="level-item button is-primary is-rounded" href="https://github.com/hujinbin" target="_blank" rel="noopener">关注我</a></div><div class="level is-mobile"><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="Github" href="https://github.com/hujinbin"><i class="fab fa-github"></i></a><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="Email" href="mailto:437044048@qq.com"><i class="fa fa-envelope"></i></a><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="RSS" href="/atom.xml"><i class="fas fa-rss"></i></a></div><div><hr><p id="hitokoto">:D 一言句子获取中...</p><script type="text/javascript" defer>function getYiyan(){
+                                $.getJSON("https://v1.hitokoto.cn/", function (data) {
+                                if(data){
+                                    $('#hitokoto').html("");
+                                    $('#hitokoto').append("<strong style='color: #3273dc;'>"+data.hitokoto+"</strong>"+
+                                    "<p>"+"来源《"+data.from+"》</p><p>提供者-"+data.creator+"</p>");
+                                }});}
+                                $(function (){getYiyan();$('#hitokoto').click(function(){getYiyan();})});</script></div></div></div><div class="card widget" data-type="links"><div class="card-content"><div class="menu"><h3 class="menu-label">链接</h3><ul class="menu-list"><li><a class="level is-mobile" href="https://cash.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惠shop好货</span></span><span class="level-right"><span class="level-item tag">cash.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://jue.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惊觉</span></span><span class="level-right"><span class="level-item tag">jue.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://bbs.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">乾学网</span></span><span class="level-right"><span class="level-item tag">bbs.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://guide.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">乾坤宝录</span></span><span class="level-right"><span class="level-item tag">guide.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://coupon.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惠shop</span></span><span class="level-right"><span class="level-item tag">coupon.leheavengame.com</span></span></a></li></ul></div></div></div><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><!--!--><div class="card widget"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-11-08T13:19:36.000Z">2026-11-08</time></p><p class="title"><a href="/2026/11/08/%E5%89%8D%E7%AB%AF%E6%80%8E%E4%B9%88%E7%94%A8-WebAssembly%EF%BC%9F%E4%BB%8E%E4%B8%80%E4%B8%AA%E6%B5%8F%E8%A7%88%E5%99%A8%E5%9B%BE%E7%89%87%E5%8E%8B%E7%BC%A9%E5%B7%A5%E5%85%B7%E8%AF%B4%E8%B5%B7/">前端怎么用 WebAssembly？从一个浏览器图片压缩工具说起</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-08-07T09:40:07.000Z">2026-08-07</time></p><p class="title"><a href="/2026/08/07/Claude-Code-%E6%B3%84%E9%9C%B2%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-%E4%BB%8E-Agent-%E5%BE%AA%E7%8E%AF%E5%88%B0%E5%B7%A5%E5%85%B7%E6%9D%83%E9%99%90%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86/">Claude Code 泄露源码解读,从 Agent 循环到工具权限与上下文管理</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-03-25T14:21:39.000Z">2026-03-25</time></p><p class="title"><a href="/2026/03/25/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%8F%91-AI-Skill%EF%BC%9A%E6%89%93%E9%80%A0%E4%BD%A0%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA-AI-%E8%83%BD%E5%8A%9B%E6%89%A9%E5%B1%95/">从零开发 AI Skill：打造你的第一个 AI 能力扩展</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-03-08T15:14:00.000Z">2026-03-08</time></p><p class="title"><a href="/2026/03/08/AI-%E6%97%B6%E4%BB%A3%E5%BF%85%E5%A4%87%E6%8A%80%E8%83%BD%E6%8C%87%E5%8D%97%EF%BC%9A%E4%BB%8E-Prompt-%E6%96%B0%E6%89%8B%E5%88%B0-AI-%E4%B8%93%E5%AE%B6%E7%9A%84%E8%BF%9B%E9%98%B6%E8%B7%AF/">AI 时代必备技能指南：从 Prompt 新手到 AI 专家的进阶路</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-01-23T14:21:48.000Z">2026-01-23</time></p><p class="title"><a href="/2026/01/23/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3-Model-Context-Protocol%EF%BC%9A%E4%BB%8E%E9%9B%B6%E6%9E%84%E5%BB%BA-AI-%E7%9F%A5%E8%AF%86%E5%BA%93%E6%9C%8D%E5%8A%A1/">深入理解 Model Context Protocol：从零构建 AI 知识库服务</a></p></div></article></div></div><!--!--><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">归档</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/archives/2026/11/"><span class="level-start"><span class="level-item">十一月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/08/"><span class="level-start"><span class="level-item">八月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/03/"><span class="level-start"><span class="level-item">三月 2026</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/01/"><span class="level-start"><span class="level-item">一月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2025/12/"><span class="level-start"><span class="level-item">十二月 2025</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><a class="level is-mobile is-marginless" href="/archives/"><span class="level-start"><span class="level-item">查看全部&gt;&gt;</span></span></a></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">标签</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/javascript/"><span class="tag">javascript</span><span class="tag is-grey-lightest">39</span></a></div><div class="control"><a class="tags has-addons" href="/tags/node/"><span class="tag">node</span><span class="tag is-grey-lightest">6</span></a></div><div class="control"><a class="tags has-addons" href="/tags/Vue/"><span class="tag">Vue</span><span class="tag is-grey-lightest">5</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Agent/"><span class="tag">AI Agent</span><span class="tag is-grey-lightest">4</span></a></div><div class="control"><a class="tags has-addons" href="/tags/TypeScript/"><span class="tag">TypeScript</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/css/"><span class="tag">css</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI/"><span class="tag">AI</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Tools/"><span class="tag">AI Tools</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/MCP/"><span class="tag">MCP</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/http/"><span class="tag">http</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91/"><span class="tag">前端开发</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/3D%E5%8F%AF%E8%A7%86%E5%8C%96/"><span class="tag">3D可视化</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Skill/"><span class="tag">AI Skill</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7/"><span class="tag">AI 工具</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E5%AE%9E%E8%B7%B5/"><span class="tag">AI 工具实践</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E5%BC%80%E5%8F%91/"><span class="tag">AI 工具开发</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E6%8C%87%E5%8D%97/"><span class="tag">AI 工具指南</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E7%94%9F%E6%80%81/"><span class="tag">AI 工具生态</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E9%80%89%E5%9E%8B/"><span class="tag">AI 工具选型</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E9%9B%86%E6%88%90/"><span class="tag">AI 工具集成</span><span class="tag is-grey-lightest">1</span></a></div></div><div class="field is-grouped is-grouped-multiline"><a class="tags has-addons" href="/tags/"><span class="tag">查看全部&gt;&gt;</span></a></div></div></div></div><div class="card widget" data-type="subscribe-email"><div class="card-content"><div class="menu"><h3 class="menu-label">订阅更新</h3><form action="https://feedburner.google.com/fb/a/mailverify" method="post" target="popupwindow" onsubmit="window.open(&#039;https://feedburner.google.com/fb/a/mailverify?uri=&#039;,&#039;popupwindow&#039;,&#039;scrollbars=yes,width=550,height=520&#039;);return true"><input type="hidden" value="" name="uri"><input type="hidden" name="loc" value="en_US"><div class="field has-addons"><div class="control has-icons-left is-expanded"><input class="input" name="email" type="email" placeholder="Email"><span class="icon is-small is-left"><i class="fas fa-envelope"></i></span></div><div class="control"><input class="button" type="submit" value="订阅"></div></div></form></div></div></div><div class="column-right-shadow is-hidden-widescreen"></div></div></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/"><img src="http://cdn.leheavengame.com/jue/images/bcd357f0-a4c2-11eb-ac26-0f6ed95d4e69.png" alt="胡金斌的个人网站" height="28"></a><p class="size-small"><span>&copy; 2026 hujinbin</span>  <br><span>© <a href="https://beian.miit.gov.cn/" rel="nofollow noopener noreferrer" target="_blank">浙ICP备17021862号-1</a><br></span><span>© 版权说明：[本网站所有内容均收集于互联网或自己创作,<br />&nbsp;&nbsp;&nbsp;&nbsp;方便于网友与自己学习交流，如有侵权，请<a href="/message" target="_blank">留言</a>，立即处理]<br /></span><span><span id="statistic-times">loading...</span><script>function createTime(time) {
+            var n = new Date(time);
+            now.setTime(now.getTime() + 250),
+                days = (now - n) / 1e3 / 60 / 60 / 24,
+                dnum = Math.floor(days),
+                hours = (now - n) / 1e3 / 60 / 60 - 24 * dnum,
+                hnum = Math.floor(hours),
+            1 == String(hnum).length && (hnum = "0" + hnum),
+                minutes = (now - n) / 1e3 / 60 - 1440 * dnum - 60 * hnum,
+                mnum = Math.floor(minutes),
+            1 == String(mnum).length && (mnum = "0" + mnum),
+                seconds = (now - n) / 1e3 - 86400 * dnum - 3600 * hnum - 60 * mnum,
+                snum = Math.round(seconds),
+            1 == String(snum).length && (snum = "0" + snum),
+                document.getElementById("statistic-times").innerHTML = "❤️本站自 <strong>"+time.split(" ")[0].replace(/\//g,".")+"</strong> 已运行 <strong>" + dnum + "</strong> 天 <strong>" + hnum + "</strong> 小时 <strong>" + mnum + "</strong> 分 <strong>" + snum + "</strong> 秒！❤️";
+        }var now = new Date();setInterval("createTime('2017/05/25 00:00:00')", 250,"");</script><br></span><div class="size-small"><span>❤️感谢 <strong><span id="busuanzi_value_site_uv">99+</span></strong> 小伙伴的 <strong><span id="busuanzi_value_site_pv">99+</span></strong> 次光临！❤️</span></div></p></div><div class="level-end"><div class="sideMusic"><link rel="stylesheet" href="/css/APlayer.min.css"><script src="/js/APlayer.min.js"></script><script src="/js/Meting.min.js"></script><meting-js style="width: auto;height: 2000px;" server="netease" type="playlist" id="2364053447" theme="#2980b9" loop="all" autoplay="false" order="list" storageName="aplayer-setting" lrctype="0" list-max-height="400px" fixed="true"></meting-js></div></div></div></div><script>
+            var bp = document.createElement('script');
+            var curProtocol = window.location.protocol.split(':')[0];
+            if (curProtocol === 'https') {
+                bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+            }
+            else {
+                bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+            }
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(bp, s);
+        </script></footer><script src="/js/vendor/moment-with-locales-2.22.2.min.js"></script><script src="/js/vendor/clipboard-2.0.4.min.js" defer></script><script>moment.locale("zh-CN");</script><script>var IcarusThemeSettings = {
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="/js/column.js"></script><script src="/js/animation.js"></script><a id="back-to-top" title="回到顶端" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back_to_top.js" defer></script><!--!--><!--!--><!--!--><script src="https://cdnjs.loli.net/ajax/libs/lightgallery/1.6.8/js/lightgallery.min.js" defer></script><script src="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.7.0/js/jquery.justifiedGallery.min.js" defer></script><script>window.addEventListener("load", () => {
+            if (typeof $.fn.lightGallery === 'function') {
+                $('.article').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof $.fn.justifiedGallery === 'function') {
+                if ($('.justified-gallery > p > .gallery-item').length) {
+                    $('.justified-gallery > p > .gallery-item').unwrap();
+                }
+                $('.justified-gallery').justifiedGallery();
+            }
+        });</script><!--!--><!--!--><!--!--><script src="/js/main.js" defer></script><script>$.getScript('/js/comment-issue-data.js',function(){loadIssueData('805d0c127d7edb5532bb','89de913bcdc87f3e47e916e5516f21ae8f0a69dd','hujinbin','myBlog',false);})</script><div class="searchbox"><div class="searchbox-container"><div class="searchbox-header"><div class="searchbox-input-container"><input class="searchbox-input" type="text" placeholder="想要查找什么..."></div><a class="searchbox-close" href="javascript:;">×</a></div><div class="searchbox-body"></div></div></div><script src="/js/insight.js" defer></script><script>document.addEventListener('DOMContentLoaded', function () {
+            loadInsight({"contentUrl":"/content.json"}, {"hint":"想要查找什么...","untitled":"(无标题)","posts":"文章","pages":"页面","categories":"分类","tags":"标签"});
+        });</script><script src="/js/pjax.js"></script><script type="text/javascript">var pjax = new Pjax({
+            elements: "a",//代表点击链接就更新
+            selectors: [  //代表要更新的节点
+                "body > .section", // 只替换页面主区域，不匹配文章中的同名区块
+                "body > .navbar-main .navbar-start", // 同步当前菜单高亮，保留搜索和主题切换按钮。
+                "title"
+            ],
+            cache: true,
+            cacheBust:false,
+            timeout: 8000
+        })
+
+        function loadBusuanzi(){
+        $.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js", function () {});
+        }
+
+        // 开始 PJAX 执行的函数
+        document.addEventListener('pjax:send', function () {
+        });
+        
+        // PJAX 完成之后执行的函数，可以和上面的重载放在一起
+        document.addEventListener('pjax:complete', function () {
+            $("body > .section").css({opacity:1});
+            if(false){
+                try{
+                    $.getScript('/js/comment-issue-data.js',function(){loadIssueData('805d0c127d7edb5532bb','89de913bcdc87f3e47e916e5516f21ae8f0a69dd','hujinbin','myBlog',false);});
+                }catch(e){}
+             }
+            if(false){
+                loadMathJax();
+            }
+            loadMainJs(jQuery, window.moment, window.ClipboardJS, window.IcarusThemeSettings);
+            loadBackTop();
+            loadBusuanzi();
+            if(typeof loadBanner == 'function'){
+                loadBanner();
+            }
+        });</script></body></html>

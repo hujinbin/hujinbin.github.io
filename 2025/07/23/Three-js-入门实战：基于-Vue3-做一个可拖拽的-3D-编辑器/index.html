@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><script id="blog-adsense-loader" data-cfasync="false" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7979174285252748" crossorigin="anonymous"></script><script data-cfasync="false">
+                document.getElementById('blog-adsense-loader').addEventListener('error', function () {
+                    window.__blogAdsenseLoaderFailed = true;
+                    document.dispatchEvent(new Event('adsense:loader-error'));
+                });
+            </script><script data-cfasync="false" defer src="/js/adsense.js?v=1"></script><script>
+                if (window.location.protocol === 'https:') {
+                    var policy = document.createElement('meta');
+                    policy.httpEquiv = 'Content-Security-Policy';
+                    policy.content = 'upgrade-insecure-requests';
+                    document.head.appendChild(policy);
+                }
+            </script><meta><title>Three.js 入门实战：基于 Vue3 做一个可拖拽的 3D 编辑器 - 胡金斌的个人网站</title><link rel="manifest" href="/manifest.json"><meta name="application-name" content="胡金斌的个人网站"><meta name="msapplication-TileImage" content="https://cdn.jsdelivr.net/gh/removeif/removeif-demo@latest/img/favicon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="胡金斌的个人网站"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="description" content="Three.js 入门实战：基于 Vue3 做一个可拖拽的 3D 编辑器前言如果你是第一次接触 Three.js，这篇文章会带你从 0 到 1 建立完整认知：   Three.js 到底是什么。  核心概念有哪些。  怎么在真实项目里用起来。  新手最容易踩哪些坑。  本文不是纯理论，而是结合我自己写的一个真实项目 drag-3D-three 来讲解。这个项目是一个 3D&amp;#x2F;2D 可视化大屏编辑器，"><meta property="og:type" content="blog"><meta property="og:title" content="胡金斌"><meta property="og:url" content="https://github.com/hujinbin"><meta property="og:site_name" content="胡金斌"><meta property="og:description" content="Three.js 入门实战：基于 Vue3 做一个可拖拽的 3D 编辑器前言如果你是第一次接触 Three.js，这篇文章会带你从 0 到 1 建立完整认知：   Three.js 到底是什么。  核心概念有哪些。  怎么在真实项目里用起来。  新手最容易踩哪些坑。  本文不是纯理论，而是结合我自己写的一个真实项目 drag-3D-three 来讲解。这个项目是一个 3D&amp;#x2F;2D 可视化大屏编辑器，"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg"><meta property="article:published_time" content="2025-07-23T13:14:38.000Z"><meta property="article:modified_time" content="2026-10-12T11:27:21.663Z"><meta property="article:author" content="hujinbin"><meta property="article:tag" content="Three.js"><meta property="article:tag" content="Vue3"><meta property="article:tag" content="TypeScript"><meta property="article:tag" content="新手教程"><meta property="article:tag" content="3D可视化"><meta property="article:tag" content="数字孪生"><meta property="twitter:card" content="summary"><meta property="twitter:image" content="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://hjb.leheavengame.com/2025/07/23/Three-js-%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98%EF%BC%9A%E5%9F%BA%E4%BA%8E-Vue3-%E5%81%9A%E4%B8%80%E4%B8%AA%E5%8F%AF%E6%8B%96%E6%8B%BD%E7%9A%84-3D-%E7%BC%96%E8%BE%91%E5%99%A8/"},"headline":"胡金斌的个人网站","image":["https://hjb.leheavengame.com/img/og_image.png"],"datePublished":"2025-07-23T13:14:38.000Z","dateModified":"2026-10-12T11:27:21.663Z","author":{"@type":"Person","name":"hujinbin"},"description":"Three.js 入门实战：基于 Vue3 做一个可拖拽的 3D 编辑器前言如果你是第一次接触 Three.js，这篇文章会带你从 0 到 1 建立完整认知：   Three.js 到底是什么。  核心概念有哪些。  怎么在真实项目里用起来。  新手最容易踩哪些坑。  本文不是纯理论，而是结合我自己写的一个真实项目 drag-3D-three 来讲解。这个项目是一个 3D&#x2F;2D 可视化大屏编辑器，"}</script><link rel="canonical" href="https://hjb.leheavengame.com/2025/07/23/Three-js-%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98%EF%BC%9A%E5%9F%BA%E4%BA%8E-Vue3-%E5%81%9A%E4%B8%80%E4%B8%AA%E5%8F%AF%E6%8B%96%E6%8B%BD%E7%9A%84-3D-%E7%BC%96%E8%BE%91%E5%99%A8/"><link rel="icon" href="https://cdn.jsdelivr.net/gh/removeif/removeif-demo@latest/img/favicon.png"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/5.12.0/css/all.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/highlight.js/9.12.0/styles/atom-one-light.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css2?family=Ubuntu:wght@400;600&amp;family=Source+Code+Pro"><link rel="stylesheet" href="/css/default.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/5.12.0/css/all.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css?family=Ubuntu:400,600|Source+Code+Pro|Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Microsoft YaHei:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&amp;amp;subset=latin,latin-ext|Inconsolata|Itim|Lobster.css"><script src="/js/vendor/jquery-3.3.1.min.js"></script><script src="/js/globalUtils.js"></script><style>body>.footer,body>.navbar,body>.section{opacity:0}</style><!--!--><script>var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            hm.src = "//hm.baidu.com/hm.js?5676cd260145578c2f389fb76f4c82be";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();</script><script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" defer></script><!--!--><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.7.0/css/justifiedGallery.min.css"><!--!--><!--!--><script src="/js/vendor/pace-1.0.2.min.js"></script><link rel="stylesheet" href="/live2d/waifu.css"><script type="text/javascript" async src="/live2d/autoload.js"></script><script>
+        if(window.location.origin === 'http://hjb.leheavengame.com'){
+            window.location.replace("https://hjb.leheavengame.com"+window.location.pathname)
+        }
+        </script><meta name="generator" content="Hexo 5.3.0"></head><body class="is-3-column has-navbar-fixed-top"><nav class="navbar navbar-main is-fixed-top"><div class="container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/"><img src="http://cdn.leheavengame.com/jue/images/bcd357f0-a4c2-11eb-ac26-0f6ed95d4e69.png" alt="胡金斌的个人网站" height="28"></a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">首页</a><a class="navbar-item" href="/archives">归档</a><a class="navbar-item" href="/tags">标签</a><a class="navbar-item" href="/media">影音</a><a class="navbar-item" href="/album">相册</a><a class="navbar-item" href="/friend">友链</a><a class="navbar-item" href="/self-talking">碎碎念</a><a class="navbar-item" href="/message">留言</a><a class="navbar-item" href="/about">关于</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/hujinbin"><i class="fab fa-github"></i></a><a class="navbar-item search" title="搜索" href="javascript:;"><i class="fas fa-search"></i></a><a class="navbar-item" id="night-nav" title="Night Mode" href="javascript:;"><i class="fas fa-moon" id="night-icon"></i></a></div></div></div></nav><script type="text/javascript" src="/js/theme-setting.js"></script><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-9-widescreen"><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><div class="card"><article class="card-content article" role="article"><div class="article-meta size-small is-uppercase level is-mobile"><div class="level-left"><i class="far fa-calendar-plus"> </i>2025-07-23  <a class="commentCountImg" href="/2025/07/23/Three-js-%E5%85%A5%E9%97%A8%E5%AE%9E%E6%88%98%EF%BC%9A%E5%9F%BA%E4%BA%8E-Vue3-%E5%81%9A%E4%B8%80%E4%B8%AA%E5%8F%AF%E6%8B%96%E6%8B%BD%E7%9A%84-3D-%E7%BC%96%E8%BE%91%E5%99%A8/#comment-container"><span class="display-none-class">014466738e9a8eec8e8cf2c2065cd78e</span><i class="far fa-comment-dots"></i> <span class="commentCount" id="014466738e9a8eec8e8cf2c2065cd78e">99+</span>  </a><span class="level-item"><i class="far fa-clock"> </i>14 分钟  <i class="fas fa-pencil-alt"> </i>2.0 k</span><span class="level-item" id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv">0</span>次访问</span></div></div><h1 class="title is-3 is-size-4-mobile">Three.js 入门实战：基于 Vue3 做一个可拖拽的 3D 编辑器</h1><div class="content"><h1 id="Three-js-入门实战：基于-Vue3-做一个可拖拽的-3D-编辑器"><a href="#Three-js-入门实战：基于-Vue3-做一个可拖拽的-3D-编辑器" class="headerlink" title="Three.js 入门实战：基于 Vue3 做一个可拖拽的 3D 编辑器"></a>Three.js 入门实战：基于 Vue3 做一个可拖拽的 3D 编辑器</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>如果你是第一次接触 Three.js，这篇文章会带你从 0 到 1 建立完整认知：</p>
+<ol>
+<li> Three.js 到底是什么。</li>
+<li> 核心概念有哪些。</li>
+<li> 怎么在真实项目里用起来。</li>
+<li> 新手最容易踩哪些坑。</li>
+</ol>
+<p>本文不是纯理论，而是结合我自己写的一个真实项目 <code>drag-3D-three</code> 来讲解。这个项目是一个 3D/2D 可视化大屏编辑器，Three.js 部分支持拖拽创建几何体、加载模型、选择元素、修改属性和保存案例。</p>
+<p>技术栈：<code>Vue 3 + TypeScript + Vite + Three.js + Pinia</code></p>
+<hr>
+<h2 id="一、Three-js-是什么"><a href="#一、Three-js-是什么" class="headerlink" title="一、Three.js 是什么"></a>一、Three.js 是什么</h2><p>Three.js 是一个运行在浏览器中的 3D 图形库，它基于 WebGL 做了高级封装。</p>
+<p>你可以把它理解成：</p>
+<ol>
+<li> WebGL 是底层图形 API，能力强但很底层。</li>
+<li> Three.js 是更易用的“3D 开发工具箱”。</li>
+<li> 你不需要直接写复杂着色器，也能快速搭建 3D 场景。</li>
+</ol>
+<p>Three.js 适合做什么：</p>
+<ol>
+<li> 3D 数据可视化。</li>
+<li> 数字孪生大屏。</li>
+<li> 在线 3D 编辑器。</li>
+<li> 模型展示页。</li>
+<li> 小型网页 3D 互动。</li>
+</ol>
+<hr>
+ <a id="more"></a>  
+
+<h2 id="二、先记住-7-个核心概念（新手必会）"><a href="#二、先记住-7-个核心概念（新手必会）" class="headerlink" title="二、先记住 7 个核心概念（新手必会）"></a>二、先记住 7 个核心概念（新手必会）</h2><h3 id="1-Scene（场景）"><a href="#1-Scene（场景）" class="headerlink" title="1. Scene（场景）"></a>1. Scene（场景）</h3><p>所有 3D 对象都放在 Scene 里。它相当于“舞台”。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> scene = <span class="keyword">new</span> THREE.Scene()</span><br></pre></td></tr></table></figure>
+<h3 id="2-Camera（相机）"><a href="#2-Camera（相机）" class="headerlink" title="2. Camera（相机）"></a>2. Camera（相机）</h3><p>相机决定你从哪里看场景。</p>
+<p>常用的是透视相机：<code>PerspectiveCamera</code>。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> camera = <span class="keyword">new</span> THREE.PerspectiveCamera(<span class="number">75</span>, width / height, <span class="number">0.1</span>, <span class="number">1000</span>)</span><br><span class="line">camera.position.z = <span class="number">50</span></span><br></pre></td></tr></table></figure>
+<h3 id="3-Renderer（渲染器）"><a href="#3-Renderer（渲染器）" class="headerlink" title="3. Renderer（渲染器）"></a>3. Renderer（渲染器）</h3><p>渲染器负责把场景画到 canvas 上。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> renderer = <span class="keyword">new</span> THREE.WebGLRenderer(&#123; canvas, <span class="attr">antialias</span>: <span class="literal">true</span> &#125;)</span><br><span class="line">renderer.setSize(width, height)</span><br></pre></td></tr></table></figure>
+<h3 id="4-Geometry-Material-Mesh"><a href="#4-Geometry-Material-Mesh" class="headerlink" title="4. Geometry + Material + Mesh"></a>4. Geometry + Material + Mesh</h3><p>一个能看到的 3D 物体通常由三部分组成：</p>
+<ol>
+<li> <code>Geometry</code>：形状（立方体、球体等）。</li>
+<li> <code>Material</code>：材质（颜色、金属感、粗糙度等）。</li>
+<li> <code>Mesh</code>：几何体 + 材质的组合。</li>
+</ol>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> geometry = <span class="keyword">new</span> THREE.BoxGeometry(<span class="number">5</span>, <span class="number">5</span>, <span class="number">5</span>)</span><br><span class="line"><span class="keyword">const</span> material = <span class="keyword">new</span> THREE.MeshStandardMaterial(&#123; <span class="attr">color</span>: <span class="string">&#x27;#4F46E5&#x27;</span> &#125;)</span><br><span class="line"><span class="keyword">const</span> mesh = <span class="keyword">new</span> THREE.Mesh(geometry, material)</span><br><span class="line">scene.add(mesh)</span><br></pre></td></tr></table></figure>
+<h3 id="5-Light（光照）"><a href="#5-Light（光照）" class="headerlink" title="5. Light（光照）"></a>5. Light（光照）</h3><p>如果你用的是标准材质（<code>MeshStandardMaterial</code>），必须有光，不然会很黑。</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">scene.add(<span class="keyword">new</span> THREE.AmbientLight(<span class="number">0xffffff</span>, <span class="number">0.5</span>))</span><br><span class="line"><span class="keyword">const</span> directionalLight = <span class="keyword">new</span> THREE.DirectionalLight(<span class="number">0xffffff</span>, <span class="number">0.8</span>)</span><br><span class="line">directionalLight.position.set(<span class="number">1</span>, <span class="number">1</span>, <span class="number">1</span>)</span><br><span class="line">scene.add(directionalLight)</span><br></pre></td></tr></table></figure>
+<h3 id="6-Controls（控制器）"><a href="#6-Controls（控制器）" class="headerlink" title="6. Controls（控制器）"></a>6. Controls（控制器）</h3><p>项目里使用 <code>OrbitControls</code>，让用户能旋转、缩放、平移视角。</p>
+<h3 id="7-Animation-Loop（动画循环）"><a href="#7-Animation-Loop（动画循环）" class="headerlink" title="7. Animation Loop（动画循环）"></a>7. Animation Loop（动画循环）</h3><p>Three.js 渲染通常放在循环里持续执行：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">animate</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">  requestAnimationFrame(animate)</span><br><span class="line">  controls.update()</span><br><span class="line">  renderer.render(scene, camera)</span><br><span class="line">&#125;</span><br><span class="line">animate()</span><br></pre></td></tr></table></figure>
+<p>只要你掌握这 7 点，已经能做出基础可交互场景。</p>
+<hr>
+<h2 id="三、基于我这个项目看-Three-js-怎么“落地”"><a href="#三、基于我这个项目看-Three-js-怎么“落地”" class="headerlink" title="三、基于我这个项目看 Three.js 怎么“落地”"></a>三、基于我这个项目看 Three.js 怎么“落地”</h2><p>下面结合我项目 <code>drag-3D-three</code> 的核心文件 <code>src/components/ThreeDWorkspace.vue</code> 看实战。</p>
+<h3 id="1-初始化-3D-工作区"><a href="#1-初始化-3D-工作区" class="headerlink" title="1. 初始化 3D 工作区"></a>1. 初始化 3D 工作区</h3><p>在 <code>initThreeJS</code> 里完成了完整初始化流程：</p>
+<ol>
+<li> 创建 <code>scene</code>、<code>camera</code>、<code>renderer</code>。</li>
+<li> 注册 <code>OrbitControls</code>。</li>
+<li> 添加环境光、平行光、网格辅助线 <code>GridHelper</code>。</li>
+<li> 初始化 <code>Raycaster</code> 用于点击选中。</li>
+<li> 绑定 <code>resize</code>、<code>click</code>、<code>dragover</code>、<code>drop</code> 等事件。</li>
+</ol>
+<p>这就是一个标准的 Three.js 工程启动模板。</p>
+<h3 id="2-元素数据结构（非常关键）"><a href="#2-元素数据结构（非常关键）" class="headerlink" title="2. 元素数据结构（非常关键）"></a>2. 元素数据结构（非常关键）</h3><p>项目定义了统一元素结构，类似：</p>
+<figure class="highlight typescript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">interface</span> Element &#123;</span><br><span class="line">  id: <span class="built_in">string</span></span><br><span class="line">  name: <span class="built_in">string</span></span><br><span class="line">  <span class="keyword">type</span>: <span class="string">&#x27;cube&#x27;</span> | <span class="string">&#x27;sphere&#x27;</span> | <span class="string">&#x27;cylinder&#x27;</span> | <span class="string">&#x27;pyramid&#x27;</span> | <span class="string">&#x27;custom&#x27;</span></span><br><span class="line">  position: &#123; <span class="attr">x</span>: <span class="built_in">number</span>; y: <span class="built_in">number</span>; z: <span class="built_in">number</span> &#125;</span><br><span class="line">  size: &#123; <span class="attr">width</span>: <span class="built_in">number</span>; height: <span class="built_in">number</span>; depth: <span class="built_in">number</span>; radius: <span class="built_in">number</span> &#125;</span><br><span class="line">  color: <span class="built_in">string</span></span><br><span class="line">  <span class="built_in">number</span>: <span class="built_in">string</span></span><br><span class="line">  modelUrl?: <span class="built_in">string</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>为什么新手要重视这一步：</p>
+<ol>
+<li> 数据结构统一后，渲染逻辑可复用。</li>
+<li> 能轻松做保存、撤销、模板化。</li>
+<li> 后续扩展动画、材质、权限都更顺。</li>
+</ol>
+<h3 id="3-创建基础几何体"><a href="#3-创建基础几何体" class="headerlink" title="3. 创建基础几何体"></a>3. 创建基础几何体</h3><p>项目按 <code>type</code> 分发创建几何体：</p>
+<ol>
+<li> <code>cube</code> -&gt; <code>BoxGeometry</code></li>
+<li> <code>sphere</code> -&gt; <code>SphereGeometry</code></li>
+<li> <code>cylinder</code> -&gt; <code>CylinderGeometry</code></li>
+<li> <code>pyramid</code> -&gt; <code>ConeGeometry</code></li>
+</ol>
+<p>然后统一材质和位置设置，最后 <code>scene.add(mesh)</code>。</p>
+<h3 id="4-加载自定义模型（GLTF-OBJ-FBX-STL）"><a href="#4-加载自定义模型（GLTF-OBJ-FBX-STL）" class="headerlink" title="4. 加载自定义模型（GLTF/OBJ/FBX/STL）"></a>4. 加载自定义模型（GLTF/OBJ/FBX/STL）</h3><p>项目支持多种模型格式，按扩展名选择对应 Loader：</p>
+<ol>
+<li> <code>GLTFLoader</code></li>
+<li> <code>OBJLoader</code></li>
+<li> <code>FBXLoader</code></li>
+<li> <code>STLLoader</code></li>
+</ol>
+<p>加载后通过 <code>Box3</code> 计算模型包围盒，自动缩放到目标尺寸。这一步很实用，能避免不同模型源比例不一致的问题。</p>
+<h3 id="5-用-Raycaster-做“点击选中”"><a href="#5-用-Raycaster-做“点击选中”" class="headerlink" title="5. 用 Raycaster 做“点击选中”"></a>5. 用 Raycaster 做“点击选中”</h3><p>点击画布后，先把鼠标坐标转换到标准化设备坐标，再发射射线检测相交对象。命中后通过 <code>userData.elementId</code> 找到业务元素。</p>
+<p>这个思路是 Three.js 交互的基础技能。</p>
+<h3 id="6-拖拽放置：把-HTML-拖拽和-3D-场景打通"><a href="#6-拖拽放置：把-HTML-拖拽和-3D-场景打通" class="headerlink" title="6. 拖拽放置：把 HTML 拖拽和 3D 场景打通"></a>6. 拖拽放置：把 HTML 拖拽和 3D 场景打通</h3><p>项目中左侧元素卡片可拖拽，拖拽数据通过 <code>dataTransfer</code> 传入画布：</p>
+<ol>
+<li> 工具栏组件写入 <code>application/json</code>。</li>
+<li> 工作区 <code>handleDrop</code> 解析 JSON。</li>
+<li> 根据鼠标位置生成 3D 元素并发出 <code>element-created</code>。</li>
+</ol>
+<p>这就是“低代码编辑器”的核心路径。</p>
+<hr>
+<h2 id="四、新手从零跑起来（实操步骤）"><a href="#四、新手从零跑起来（实操步骤）" class="headerlink" title="四、新手从零跑起来（实操步骤）"></a>四、新手从零跑起来（实操步骤）</h2><h3 id="1-安装和启动"><a href="#1-安装和启动" class="headerlink" title="1. 安装和启动"></a>1. 安装和启动</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">npm install</span><br><span class="line">npm run dev</span><br></pre></td></tr></table></figure>
+<h3 id="2-使用路径"><a href="#2-使用路径" class="headerlink" title="2. 使用路径"></a>2. 使用路径</h3><ol>
+<li> 进入编辑页。</li>
+<li> 左侧拖一个“立方体”到中间画布。</li>
+<li> 鼠标右键/滚轮配合 <code>OrbitControls</code> 调整视角。</li>
+<li> 点击元素，在右侧修改位置、尺寸、颜色、编号。</li>
+<li> 点击保存，写入案例库。</li>
+</ol>
+<h3 id="3-你会学到什么"><a href="#3-你会学到什么" class="headerlink" title="3. 你会学到什么"></a>3. 你会学到什么</h3><p>完成以上步骤后，你会自然掌握：</p>
+<ol>
+<li> Scene/Camera/Renderer 的协作关系。</li>
+<li> Three.js 和 Vue 组件的通信方式。</li>
+<li> 基础几何体与外部模型的统一管理。</li>
+<li> 射线拾取和拖拽交互。</li>
+<li> Three.js 项目中的状态持久化思路。</li>
+</ol>
+<hr>
+<h2 id="五、常见问题与避坑清单"><a href="#五、常见问题与避坑清单" class="headerlink" title="五、常见问题与避坑清单"></a>五、常见问题与避坑清单</h2><h3 id="1-场景里什么都看不见"><a href="#1-场景里什么都看不见" class="headerlink" title="1. 场景里什么都看不见"></a>1. 场景里什么都看不见</h3><p>排查顺序：</p>
+<ol>
+<li> 相机是否对着物体。</li>
+<li> 是否有光照。</li>
+<li> 物体是否被加到 scene。</li>
+<li> 动画循环是否在执行。</li>
+<li> canvas 尺寸是否正确。</li>
+</ol>
+<h3 id="2-模型加载失败"><a href="#2-模型加载失败" class="headerlink" title="2. 模型加载失败"></a>2. 模型加载失败</h3><p>排查顺序：</p>
+<ol>
+<li> 模型路径是否可访问。</li>
+<li> 文件扩展名是否匹配 Loader。</li>
+<li> 是否有跨域问题。</li>
+<li> 控制台错误信息是否显示解析失败。</li>
+</ol>
+<h3 id="3-拖拽位置不准"><a href="#3-拖拽位置不准" class="headerlink" title="3. 拖拽位置不准"></a>3. 拖拽位置不准</h3><p>当前项目使用屏幕坐标线性映射，新手阶段够用；如果你追求更精确，建议升级为“射线与地面平面求交”方案。</p>
+<h3 id="4-画面卡顿"><a href="#4-画面卡顿" class="headerlink" title="4. 画面卡顿"></a>4. 画面卡顿</h3><p>常见原因：</p>
+<ol>
+<li> 每次数据变化都全量重建 mesh。</li>
+<li> 几何体分段数设置太高。</li>
+<li> 频繁创建对象但没有释放资源。</li>
+</ol>
+<hr>
+<h2 id="六、进阶建议：从教程走向实战"><a href="#六、进阶建议：从教程走向实战" class="headerlink" title="六、进阶建议：从教程走向实战"></a>六、进阶建议：从教程走向实战</h2><p>如果你已经跑通我这个项目，下一步建议按这个顺序升级：</p>
+<ol>
+<li> 加 <code>TransformControls</code>（选中后可视化移动/旋转/缩放）。</li>
+<li> 实现元素分组和层级管理。</li>
+<li> 增加材质面板（透明度、贴图、发光）。</li>
+<li> 加载压缩模型（Draco）优化首屏。</li>
+<li> 增量更新渲染，减少全量重建。</li>
+<li> 引入截图功能生成案例缩略图。</li>
+</ol>
+<hr>
+<h2 id="七、总结"><a href="#七、总结" class="headerlink" title="七、总结"></a>七、总结</h2><p>Three.js 入门最怕两件事：</p>
+<ol>
+<li> 只看 API，不做项目。</li>
+<li> 直接做复杂效果，基础不稳。</li>
+</ol>
+<p>这篇教程给你的路径是：</p>
+<ol>
+<li> 先吃透核心概念（场景、相机、渲染器、光照、Mesh）。</li>
+<li> 用真实项目练习交互（拖拽、选中、更新、持久化）。</li>
+<li> 再逐步走向工程化（性能、架构、可扩展性）。</li>
+</ol>
+<p>当你能独立搭出一个可拖拽编辑器时，就已经不再是 Three.js 初学者了。</p>
+<hr>
+<h2 id="项目求个-Star"><a href="#项目求个-Star" class="headerlink" title="项目求个 Star"></a>项目求个 Star</h2><p>如果这篇文章或这个项目对你有帮助，欢迎访问仓库并点一个 Star：</p>
+<p><code>https://github.com/hujinbin/drag-3D-three</code></p>
+<p>你的每一个 Star，都会让我更有动力持续更新：</p>
+<ol>
+<li> 新手友好的 Three.js 示例。</li>
+<li> 更完整的编辑器能力（变换控制、材质系统、分组层级）。</li>
+<li> 更实用的工程化优化（性能、资源管理、可维护性）。</li>
+</ol>
+<p>也欢迎提 Issue 或 PR，一起把这个项目打磨成更好用的 Three.js 学习模板。</p>
+</div><div class="article-licensing box"><div class="licensing-title"><p>Three.js 入门实战：基于 Vue3 做一个可拖拽的 3D 编辑器</p><p><a href="https://hjb.leheavengame.com/2025/07/23/Three-js-入门实战：基于-Vue3-做一个可拖拽的-3D-编辑器/">https://hjb.leheavengame.com/2025/07/23/Three-js-入门实战：基于-Vue3-做一个可拖拽的-3D-编辑器/</a></p></div><div class="licensing-meta level is-mobile"><div class="level-left"><div class="level-item is-narrow"><div><h6>作者</h6><a href="https://hjb.leheavengame.com"><p>hujinbin</p></a></div></div><div class="level-item is-narrow"><div><h6>发布于</h6><p>2025-07-23</p></div></div><div class="level-item is-narrow"><div><h6>更新于</h6><p>2026-10-12</p></div></div><div class="level-item is-narrow"><div><h6>许可协议</h6><p><a class="icon" rel="noopener" target="_blank" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a><a class="icon" rel="noopener" target="_blank" title="Attribution" href="https://creativecommons.org/licenses/by/4.0/"><i class="fab fa-creative-commons-by"></i></a><a class="icon" rel="noopener" target="_blank" title="Noncommercial" href="https://creativecommons.org/licenses/by-nc/4.0/"><i class="fab fa-creative-commons-nc"></i></a></p></div></div></div></div></div><div class="recommend-area"><div class="recommend-post"><span class="is-size-6 has-text-grey has-mr-7"># 相关文章</span><br><span>  1.<a class="is-size-6" href="/2026/11/08/%E5%89%8D%E7%AB%AF%E6%80%8E%E4%B9%88%E7%94%A8-WebAssembly%EF%BC%9F%E4%BB%8E%E4%B8%80%E4%B8%AA%E6%B5%8F%E8%A7%88%E5%99%A8%E5%9B%BE%E7%89%87%E5%8E%8B%E7%BC%A9%E5%B7%A5%E5%85%B7%E8%AF%B4%E8%B5%B7/" target="_blank">前端怎么用 WebAssembly？从一个浏览器图片压缩工具说起</a><br></span><span>  2.<a class="is-size-6" href="/2026/08/07/Claude-Code-%E6%B3%84%E9%9C%B2%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-%E4%BB%8E-Agent-%E5%BE%AA%E7%8E%AF%E5%88%B0%E5%B7%A5%E5%85%B7%E6%9D%83%E9%99%90%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86/" target="_blank">Claude Code 泄露源码解读,从 Agent 循环到工具权限与上下文管理</a><br></span><span>  3.<a class="is-size-6" href="/2026/03/25/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%8F%91-AI-Skill%EF%BC%9A%E6%89%93%E9%80%A0%E4%BD%A0%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA-AI-%E8%83%BD%E5%8A%9B%E6%89%A9%E5%B1%95/" target="_blank">从零开发 AI Skill：打造你的第一个 AI 能力扩展</a><br></span><span>  4.<a class="is-size-6" href="/2026/03/08/AI-%E6%97%B6%E4%BB%A3%E5%BF%85%E5%A4%87%E6%8A%80%E8%83%BD%E6%8C%87%E5%8D%97%EF%BC%9A%E4%BB%8E-Prompt-%E6%96%B0%E6%89%8B%E5%88%B0-AI-%E4%B8%93%E5%AE%B6%E7%9A%84%E8%BF%9B%E9%98%B6%E8%B7%AF/" target="_blank">AI 时代必备技能指南：从 Prompt 新手到 AI 专家的进阶路</a><br></span><span>  5.<a class="is-size-6" href="/2026/01/23/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3-Model-Context-Protocol%EF%BC%9A%E4%BB%8E%E9%9B%B6%E6%9E%84%E5%BB%BA-AI-%E7%9F%A5%E8%AF%86%E5%BA%93%E6%9C%8D%E5%8A%A1/" target="_blank">深入理解 Model Context Protocol：从零构建 AI 知识库服务</a><br></span><span>  6.<a class="is-size-6" href="/2025/12/25/%E4%BB%8E%E9%9B%B6%E6%89%93%E9%80%A0%E4%B8%80%E4%B8%AA%E8%B7%A8%E6%A1%86%E6%9E%B6%E9%80%9A%E7%94%A8%E7%9A%84-AI-Agent-%E6%8F%92%E4%BB%B6/" target="_blank">从零打造一个跨框架通用的 AI Agent 插件</a><br></span><span>  7.<a class="is-size-6" href="/2025/10/03/AI-Tools-%E5%AE%8C%E5%85%A8%E6%8C%87%E5%8D%97%EF%BC%9A%E4%BB%8E%E9%80%89%E6%8B%A9%E5%88%B0%E9%9B%86%E6%88%90%E7%9A%84%E5%85%A8%E9%93%BE%E8%B7%AF%E5%AE%9E%E8%B7%B5/" target="_blank">AI Tools 完全指南：从选择到集成的全链路实践</a><br></span><span>  8.<a class="is-size-6" href="/2025/08/09/Web3-js-v4-%E5%AE%8C%E6%95%B4%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" target="_blank">Web3.js v4 完整使用指南</a><br></span></div></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/social-share.js/1.0.16/css/share.min.css"><div class="social-share"></div><script src="https://cdnjs.loli.net/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script></article></div><div class="card"><div class="card-content"><h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3><div class="buttons is-centered"><a class="button donate" data-type="alipay"><span class="icon is-small"><i class="fab fa-alipay"></i></span><span>支付宝</span><span class="qrcode"><img src="https://img.alicdn.com/imgextra/i4/2509590220/TB2GxhZfjnD8KJjSspbXXbbEXXa_!!2509590220.jpg" alt="支付宝"></span></a><a class="button donate" data-type="wechat"><span class="icon is-small"><i class="fab fa-weixin"></i></span><span>微信</span><span class="qrcode"><img src="https://img.alicdn.com/imgextra/i1/2509590220/TB2K0hPfdnJ8KJjSszdXXaxuFXa_!!2509590220.png" alt="微信"></span></a></div></div></div><nav class="post-navigation mt-4 level is-mobile"><div class="level-start"><a class="article-nav-prev level level-item link-muted" href="/2025/08/09/Web3-js-v4-%E5%AE%8C%E6%95%B4%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/"><i class="level-item fas fa-chevron-left"></i><span class="level-item">Web3.js v4 完整使用指南</span></a></div><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/2025/06/23/AI-Agent%EF%BC%9A%E4%BB%8E%E5%AF%B9%E8%AF%9D%E5%B7%A5%E5%85%B7%E5%88%B0%E6%99%BA%E8%83%BD%E5%8A%A9%E6%89%8B%E7%9A%84%E8%BF%9B%E5%8C%96%E4%B9%8B%E8%B7%AF/"><span class="level-item">AI Agent：从对话工具到智能助手的进化之路</span><i class="level-item fas fa-chevron-right"></i></a></div></nav><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><div class="card"><div class="card-content"><div class="title is-5">评论</div><div id="comment-container"></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/gitalk/1.6.0/gitalk.css"><script> $.getScript('/js/gitalk.min.js', function () {
+            var cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
+            var gitalk = new Gitalk({
+            language:'zh-CN',
+            id: '014466738e9a8eec8e8cf2c2065cd78e',
+            title: "Three.js 入门实战：基于 Vue3 做一个可拖拽的 3D 编辑器",
+            url: cleanUrl,
+            repo: 'myBlog',
+            owner: 'hujinbin',
+            clientID: '805d0c127d7edb5532bb',
+            clientSecret: '89de913bcdc87f3e47e916e5516f21ae8f0a69dd',
+            admin: ["hujinbin"],
+            createIssueManually: false,
+            distractionFreeMode: false,
+            perPage: 10,
+            pagerDirection: 'last',
+            labels: ["Gitalk"],
+            proxy: 'https://www.leheavengame.com/api/github/oauth/access_token',
+            
+            enableHotKey: true,
+            isLocked: false
+        })
+        gitalk.render('comment-container')});</script></div></div></div><div class="column column-left is-4-tablet is-4-desktop is-3-widescreen  order-1 is-sticky"><!--!--><div class="card widget" data-type="profile"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="avatar is-rounded" src="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg" alt="胡金斌"></figure><p class="title is-size-4 is-block" style="line-height:inherit;">胡金斌</p><p class="is-size-6 is-block">web前端开发工程师</p><p class="is-size-6 is-flex justify-content-center"><i class="fas fa-map-marker-alt mr-1"></i><span>浙江杭州</span></p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">文章</p><a href="/archives"><p class="title">58</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">分类</p><a href="/categories"><p class="title">0</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">标签</p><a href="/tags"><p class="title">63</p></a></div></div></nav><div class="level"><a class="level-item button is-primary is-rounded" href="https://github.com/hujinbin" target="_blank" rel="noopener">关注我</a></div><div class="level is-mobile"><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="Github" href="https://github.com/hujinbin"><i class="fab fa-github"></i></a><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="Email" href="mailto:437044048@qq.com"><i class="fa fa-envelope"></i></a><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="RSS" href="/atom.xml"><i class="fas fa-rss"></i></a></div><div><hr><p id="hitokoto">:D 一言句子获取中...</p><script type="text/javascript" defer>function getYiyan(){
+                                $.getJSON("https://v1.hitokoto.cn/", function (data) {
+                                if(data){
+                                    $('#hitokoto').html("");
+                                    $('#hitokoto').append("<strong style='color: #3273dc;'>"+data.hitokoto+"</strong>"+
+                                    "<p>"+"来源《"+data.from+"》</p><p>提供者-"+data.creator+"</p>");
+                                }});}
+                                $(function (){getYiyan();$('#hitokoto').click(function(){getYiyan();})});</script></div></div></div><div class="card widget" data-type="links"><div class="card-content"><div class="menu"><h3 class="menu-label">链接</h3><ul class="menu-list"><li><a class="level is-mobile" href="https://cash.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惠shop好货</span></span><span class="level-right"><span class="level-item tag">cash.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://jue.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惊觉</span></span><span class="level-right"><span class="level-item tag">jue.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://bbs.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">乾学网</span></span><span class="level-right"><span class="level-item tag">bbs.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://guide.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">乾坤宝录</span></span><span class="level-right"><span class="level-item tag">guide.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://coupon.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惠shop</span></span><span class="level-right"><span class="level-item tag">coupon.leheavengame.com</span></span></a></li></ul></div></div></div><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><!--!--><div class="card widget"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-11-08T13:19:36.000Z">2026-11-08</time></p><p class="title"><a href="/2026/11/08/%E5%89%8D%E7%AB%AF%E6%80%8E%E4%B9%88%E7%94%A8-WebAssembly%EF%BC%9F%E4%BB%8E%E4%B8%80%E4%B8%AA%E6%B5%8F%E8%A7%88%E5%99%A8%E5%9B%BE%E7%89%87%E5%8E%8B%E7%BC%A9%E5%B7%A5%E5%85%B7%E8%AF%B4%E8%B5%B7/">前端怎么用 WebAssembly？从一个浏览器图片压缩工具说起</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-08-07T09:40:07.000Z">2026-08-07</time></p><p class="title"><a href="/2026/08/07/Claude-Code-%E6%B3%84%E9%9C%B2%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-%E4%BB%8E-Agent-%E5%BE%AA%E7%8E%AF%E5%88%B0%E5%B7%A5%E5%85%B7%E6%9D%83%E9%99%90%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86/">Claude Code 泄露源码解读,从 Agent 循环到工具权限与上下文管理</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-03-25T14:21:39.000Z">2026-03-25</time></p><p class="title"><a href="/2026/03/25/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%8F%91-AI-Skill%EF%BC%9A%E6%89%93%E9%80%A0%E4%BD%A0%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA-AI-%E8%83%BD%E5%8A%9B%E6%89%A9%E5%B1%95/">从零开发 AI Skill：打造你的第一个 AI 能力扩展</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-03-08T15:14:00.000Z">2026-03-08</time></p><p class="title"><a href="/2026/03/08/AI-%E6%97%B6%E4%BB%A3%E5%BF%85%E5%A4%87%E6%8A%80%E8%83%BD%E6%8C%87%E5%8D%97%EF%BC%9A%E4%BB%8E-Prompt-%E6%96%B0%E6%89%8B%E5%88%B0-AI-%E4%B8%93%E5%AE%B6%E7%9A%84%E8%BF%9B%E9%98%B6%E8%B7%AF/">AI 时代必备技能指南：从 Prompt 新手到 AI 专家的进阶路</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-01-23T14:21:48.000Z">2026-01-23</time></p><p class="title"><a href="/2026/01/23/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3-Model-Context-Protocol%EF%BC%9A%E4%BB%8E%E9%9B%B6%E6%9E%84%E5%BB%BA-AI-%E7%9F%A5%E8%AF%86%E5%BA%93%E6%9C%8D%E5%8A%A1/">深入理解 Model Context Protocol：从零构建 AI 知识库服务</a></p></div></article></div></div><!--!--><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">归档</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/archives/2026/11/"><span class="level-start"><span class="level-item">十一月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/08/"><span class="level-start"><span class="level-item">八月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/03/"><span class="level-start"><span class="level-item">三月 2026</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/01/"><span class="level-start"><span class="level-item">一月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2025/12/"><span class="level-start"><span class="level-item">十二月 2025</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><a class="level is-mobile is-marginless" href="/archives/"><span class="level-start"><span class="level-item">查看全部&gt;&gt;</span></span></a></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">标签</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/javascript/"><span class="tag">javascript</span><span class="tag is-grey-lightest">39</span></a></div><div class="control"><a class="tags has-addons" href="/tags/node/"><span class="tag">node</span><span class="tag is-grey-lightest">6</span></a></div><div class="control"><a class="tags has-addons" href="/tags/Vue/"><span class="tag">Vue</span><span class="tag is-grey-lightest">5</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Agent/"><span class="tag">AI Agent</span><span class="tag is-grey-lightest">4</span></a></div><div class="control"><a class="tags has-addons" href="/tags/TypeScript/"><span class="tag">TypeScript</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/css/"><span class="tag">css</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI/"><span class="tag">AI</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Tools/"><span class="tag">AI Tools</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/MCP/"><span class="tag">MCP</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/http/"><span class="tag">http</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91/"><span class="tag">前端开发</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/3D%E5%8F%AF%E8%A7%86%E5%8C%96/"><span class="tag">3D可视化</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Skill/"><span class="tag">AI Skill</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7/"><span class="tag">AI 工具</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E5%AE%9E%E8%B7%B5/"><span class="tag">AI 工具实践</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E5%BC%80%E5%8F%91/"><span class="tag">AI 工具开发</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E6%8C%87%E5%8D%97/"><span class="tag">AI 工具指南</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E7%94%9F%E6%80%81/"><span class="tag">AI 工具生态</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E9%80%89%E5%9E%8B/"><span class="tag">AI 工具选型</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E9%9B%86%E6%88%90/"><span class="tag">AI 工具集成</span><span class="tag is-grey-lightest">1</span></a></div></div><div class="field is-grouped is-grouped-multiline"><a class="tags has-addons" href="/tags/"><span class="tag">查看全部&gt;&gt;</span></a></div></div></div></div><div class="card widget" data-type="subscribe-email"><div class="card-content"><div class="menu"><h3 class="menu-label">订阅更新</h3><form action="https://feedburner.google.com/fb/a/mailverify" method="post" target="popupwindow" onsubmit="window.open(&#039;https://feedburner.google.com/fb/a/mailverify?uri=&#039;,&#039;popupwindow&#039;,&#039;scrollbars=yes,width=550,height=520&#039;);return true"><input type="hidden" value="" name="uri"><input type="hidden" name="loc" value="en_US"><div class="field has-addons"><div class="control has-icons-left is-expanded"><input class="input" name="email" type="email" placeholder="Email"><span class="icon is-small is-left"><i class="fas fa-envelope"></i></span></div><div class="control"><input class="button" type="submit" value="订阅"></div></div></form></div></div></div><div class="column-right-shadow is-hidden-widescreen"></div></div></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/"><img src="http://cdn.leheavengame.com/jue/images/bcd357f0-a4c2-11eb-ac26-0f6ed95d4e69.png" alt="胡金斌的个人网站" height="28"></a><p class="size-small"><span>&copy; 2026 hujinbin</span>  <br><span>© <a href="https://beian.miit.gov.cn/" rel="nofollow noopener noreferrer" target="_blank">浙ICP备17021862号-1</a><br></span><span>© 版权说明：[本网站所有内容均收集于互联网或自己创作,<br />&nbsp;&nbsp;&nbsp;&nbsp;方便于网友与自己学习交流，如有侵权，请<a href="/message" target="_blank">留言</a>，立即处理]<br /></span><span><span id="statistic-times">loading...</span><script>function createTime(time) {
+            var n = new Date(time);
+            now.setTime(now.getTime() + 250),
+                days = (now - n) / 1e3 / 60 / 60 / 24,
+                dnum = Math.floor(days),
+                hours = (now - n) / 1e3 / 60 / 60 - 24 * dnum,
+                hnum = Math.floor(hours),
+            1 == String(hnum).length && (hnum = "0" + hnum),
+                minutes = (now - n) / 1e3 / 60 - 1440 * dnum - 60 * hnum,
+                mnum = Math.floor(minutes),
+            1 == String(mnum).length && (mnum = "0" + mnum),
+                seconds = (now - n) / 1e3 - 86400 * dnum - 3600 * hnum - 60 * mnum,
+                snum = Math.round(seconds),
+            1 == String(snum).length && (snum = "0" + snum),
+                document.getElementById("statistic-times").innerHTML = "❤️本站自 <strong>"+time.split(" ")[0].replace(/\//g,".")+"</strong> 已运行 <strong>" + dnum + "</strong> 天 <strong>" + hnum + "</strong> 小时 <strong>" + mnum + "</strong> 分 <strong>" + snum + "</strong> 秒！❤️";
+        }var now = new Date();setInterval("createTime('2017/05/25 00:00:00')", 250,"");</script><br></span><div class="size-small"><span>❤️感谢 <strong><span id="busuanzi_value_site_uv">99+</span></strong> 小伙伴的 <strong><span id="busuanzi_value_site_pv">99+</span></strong> 次光临！❤️</span></div></p></div><div class="level-end"><div class="sideMusic"><link rel="stylesheet" href="/css/APlayer.min.css"><script src="/js/APlayer.min.js"></script><script src="/js/Meting.min.js"></script><meting-js style="width: auto;height: 2000px;" server="netease" type="playlist" id="2364053447" theme="#2980b9" loop="all" autoplay="false" order="list" storageName="aplayer-setting" lrctype="0" list-max-height="400px" fixed="true"></meting-js></div></div></div></div><script>
+            var bp = document.createElement('script');
+            var curProtocol = window.location.protocol.split(':')[0];
+            if (curProtocol === 'https') {
+                bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+            }
+            else {
+                bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+            }
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(bp, s);
+        </script></footer><script src="/js/vendor/moment-with-locales-2.22.2.min.js"></script><script src="/js/vendor/clipboard-2.0.4.min.js" defer></script><script>moment.locale("zh-CN");</script><script>var IcarusThemeSettings = {
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="/js/column.js"></script><script src="/js/animation.js"></script><a id="back-to-top" title="回到顶端" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back_to_top.js" defer></script><!--!--><!--!--><!--!--><script src="https://cdnjs.loli.net/ajax/libs/lightgallery/1.6.8/js/lightgallery.min.js" defer></script><script src="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.7.0/js/jquery.justifiedGallery.min.js" defer></script><script>window.addEventListener("load", () => {
+            if (typeof $.fn.lightGallery === 'function') {
+                $('.article').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof $.fn.justifiedGallery === 'function') {
+                if ($('.justified-gallery > p > .gallery-item').length) {
+                    $('.justified-gallery > p > .gallery-item').unwrap();
+                }
+                $('.justified-gallery').justifiedGallery();
+            }
+        });</script><!--!--><!--!--><!--!--><script src="/js/main.js" defer></script><script>$.getScript('/js/comment-issue-data.js',function(){loadIssueData('805d0c127d7edb5532bb','89de913bcdc87f3e47e916e5516f21ae8f0a69dd','hujinbin','myBlog',false);})</script><div class="searchbox"><div class="searchbox-container"><div class="searchbox-header"><div class="searchbox-input-container"><input class="searchbox-input" type="text" placeholder="想要查找什么..."></div><a class="searchbox-close" href="javascript:;">×</a></div><div class="searchbox-body"></div></div></div><script src="/js/insight.js" defer></script><script>document.addEventListener('DOMContentLoaded', function () {
+            loadInsight({"contentUrl":"/content.json"}, {"hint":"想要查找什么...","untitled":"(无标题)","posts":"文章","pages":"页面","categories":"分类","tags":"标签"});
+        });</script><script src="/js/pjax.js"></script><script type="text/javascript">var pjax = new Pjax({
+            elements: "a",//代表点击链接就更新
+            selectors: [  //代表要更新的节点
+                "body > .section", // 只替换页面主区域，不匹配文章中的同名区块
+                "body > .navbar-main .navbar-start", // 同步当前菜单高亮，保留搜索和主题切换按钮。
+                "title"
+            ],
+            cache: true,
+            cacheBust:false,
+            timeout: 8000
+        })
+
+        function loadBusuanzi(){
+        $.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js", function () {});
+        }
+
+        // 开始 PJAX 执行的函数
+        document.addEventListener('pjax:send', function () {
+        });
+        
+        // PJAX 完成之后执行的函数，可以和上面的重载放在一起
+        document.addEventListener('pjax:complete', function () {
+            $("body > .section").css({opacity:1});
+            if(false){
+                try{
+                    $.getScript('/js/comment-issue-data.js',function(){loadIssueData('805d0c127d7edb5532bb','89de913bcdc87f3e47e916e5516f21ae8f0a69dd','hujinbin','myBlog',false);});
+                }catch(e){}
+             }
+            if(false){
+                loadMathJax();
+            }
+            loadMainJs(jQuery, window.moment, window.ClipboardJS, window.IcarusThemeSettings);
+            loadBackTop();
+            loadBusuanzi();
+            if(typeof loadBanner == 'function'){
+                loadBanner();
+            }
+        });</script></body></html>

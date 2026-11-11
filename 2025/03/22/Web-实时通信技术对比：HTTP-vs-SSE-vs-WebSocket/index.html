@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><script id="blog-adsense-loader" data-cfasync="false" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7979174285252748" crossorigin="anonymous"></script><script data-cfasync="false">
+                document.getElementById('blog-adsense-loader').addEventListener('error', function () {
+                    window.__blogAdsenseLoaderFailed = true;
+                    document.dispatchEvent(new Event('adsense:loader-error'));
+                });
+            </script><script data-cfasync="false" defer src="/js/adsense.js?v=1"></script><script>
+                if (window.location.protocol === 'https:') {
+                    var policy = document.createElement('meta');
+                    policy.httpEquiv = 'Content-Security-Policy';
+                    policy.content = 'upgrade-insecure-requests';
+                    document.head.appendChild(policy);
+                }
+            </script><meta><title>Web 实时通信技术对比：HTTP vs SSE vs WebSocket - 胡金斌的个人网站</title><link rel="manifest" href="/manifest.json"><meta name="application-name" content="胡金斌的个人网站"><meta name="msapplication-TileImage" content="https://cdn.jsdelivr.net/gh/removeif/removeif-demo@latest/img/favicon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="胡金斌的个人网站"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="description" content="Web 实时通信技术对比：HTTP vs SSE vs WebSocket引言在现代 Web 应用开发中，客户端与服务器之间的实时通信变得越来越重要。从简单的数据获取到实时聊天、股票行情推送、协作编辑等场景，我们需要根据具体需求选择合适的通信方式。本文将深入探讨三种主流的 Web 通信技术：HTTP、Server-Sent Events (SSE) 和 WebSocket，帮助你在实际项目中做出最"><meta property="og:type" content="blog"><meta property="og:title" content="胡金斌"><meta property="og:url" content="https://github.com/hujinbin"><meta property="og:site_name" content="胡金斌"><meta property="og:description" content="Web 实时通信技术对比：HTTP vs SSE vs WebSocket引言在现代 Web 应用开发中，客户端与服务器之间的实时通信变得越来越重要。从简单的数据获取到实时聊天、股票行情推送、协作编辑等场景，我们需要根据具体需求选择合适的通信方式。本文将深入探讨三种主流的 Web 通信技术：HTTP、Server-Sent Events (SSE) 和 WebSocket，帮助你在实际项目中做出最"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg"><meta property="article:published_time" content="2025-03-22T13:48:35.000Z"><meta property="article:modified_time" content="2026-10-12T11:27:21.666Z"><meta property="article:author" content="hujinbin"><meta property="article:tag" content="Web开发"><meta property="article:tag" content="前端技术"><meta property="article:tag" content="实时通信"><meta property="article:tag" content="WebSocket"><meta property="article:tag" content="SSE"><meta property="article:tag" content="HTTP"><meta property="twitter:card" content="summary"><meta property="twitter:image" content="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://hjb.leheavengame.com/2025/03/22/Web-%E5%AE%9E%E6%97%B6%E9%80%9A%E4%BF%A1%E6%8A%80%E6%9C%AF%E5%AF%B9%E6%AF%94%EF%BC%9AHTTP-vs-SSE-vs-WebSocket/"},"headline":"胡金斌的个人网站","image":["https://hjb.leheavengame.com/img/og_image.png"],"datePublished":"2025-03-22T13:48:35.000Z","dateModified":"2026-10-12T11:27:21.666Z","author":{"@type":"Person","name":"hujinbin"},"description":"Web 实时通信技术对比：HTTP vs SSE vs WebSocket引言在现代 Web 应用开发中，客户端与服务器之间的实时通信变得越来越重要。从简单的数据获取到实时聊天、股票行情推送、协作编辑等场景，我们需要根据具体需求选择合适的通信方式。本文将深入探讨三种主流的 Web 通信技术：HTTP、Server-Sent Events (SSE) 和 WebSocket，帮助你在实际项目中做出最"}</script><link rel="canonical" href="https://hjb.leheavengame.com/2025/03/22/Web-%E5%AE%9E%E6%97%B6%E9%80%9A%E4%BF%A1%E6%8A%80%E6%9C%AF%E5%AF%B9%E6%AF%94%EF%BC%9AHTTP-vs-SSE-vs-WebSocket/"><link rel="icon" href="https://cdn.jsdelivr.net/gh/removeif/removeif-demo@latest/img/favicon.png"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/5.12.0/css/all.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/highlight.js/9.12.0/styles/atom-one-light.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css2?family=Ubuntu:wght@400;600&amp;family=Source+Code+Pro"><link rel="stylesheet" href="/css/default.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/5.12.0/css/all.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css?family=Ubuntu:400,600|Source+Code+Pro|Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Microsoft YaHei:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&amp;amp;subset=latin,latin-ext|Inconsolata|Itim|Lobster.css"><script src="/js/vendor/jquery-3.3.1.min.js"></script><script src="/js/globalUtils.js"></script><style>body>.footer,body>.navbar,body>.section{opacity:0}</style><!--!--><script>var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            hm.src = "//hm.baidu.com/hm.js?5676cd260145578c2f389fb76f4c82be";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();</script><script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" defer></script><!--!--><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.7.0/css/justifiedGallery.min.css"><!--!--><!--!--><script src="/js/vendor/pace-1.0.2.min.js"></script><link rel="stylesheet" href="/live2d/waifu.css"><script type="text/javascript" async src="/live2d/autoload.js"></script><script>
+        if(window.location.origin === 'http://hjb.leheavengame.com'){
+            window.location.replace("https://hjb.leheavengame.com"+window.location.pathname)
+        }
+        </script><meta name="generator" content="Hexo 5.3.0"></head><body class="is-3-column has-navbar-fixed-top"><nav class="navbar navbar-main is-fixed-top"><div class="container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/"><img src="http://cdn.leheavengame.com/jue/images/bcd357f0-a4c2-11eb-ac26-0f6ed95d4e69.png" alt="胡金斌的个人网站" height="28"></a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">首页</a><a class="navbar-item" href="/archives">归档</a><a class="navbar-item" href="/tags">标签</a><a class="navbar-item" href="/media">影音</a><a class="navbar-item" href="/album">相册</a><a class="navbar-item" href="/friend">友链</a><a class="navbar-item" href="/self-talking">碎碎念</a><a class="navbar-item" href="/message">留言</a><a class="navbar-item" href="/about">关于</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/hujinbin"><i class="fab fa-github"></i></a><a class="navbar-item search" title="搜索" href="javascript:;"><i class="fas fa-search"></i></a><a class="navbar-item" id="night-nav" title="Night Mode" href="javascript:;"><i class="fas fa-moon" id="night-icon"></i></a></div></div></div></nav><script type="text/javascript" src="/js/theme-setting.js"></script><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-9-widescreen"><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><div class="card"><article class="card-content article" role="article"><div class="article-meta size-small is-uppercase level is-mobile"><div class="level-left"><i class="far fa-calendar-plus"> </i>2025-03-22  <a class="commentCountImg" href="/2025/03/22/Web-%E5%AE%9E%E6%97%B6%E9%80%9A%E4%BF%A1%E6%8A%80%E6%9C%AF%E5%AF%B9%E6%AF%94%EF%BC%9AHTTP-vs-SSE-vs-WebSocket/#comment-container"><span class="display-none-class">2d869f24c852cec231f54482c2497a24</span><i class="far fa-comment-dots"></i> <span class="commentCount" id="2d869f24c852cec231f54482c2497a24">99+</span>  </a><span class="level-item"><i class="far fa-clock"> </i>22 分钟  <i class="fas fa-pencil-alt"> </i>3.3 k</span><span class="level-item" id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv">0</span>次访问</span></div></div><h1 class="title is-3 is-size-4-mobile">Web 实时通信技术对比：HTTP vs SSE vs WebSocket</h1><div class="content"><h1 id="Web-实时通信技术对比：HTTP-vs-SSE-vs-WebSocket"><a href="#Web-实时通信技术对比：HTTP-vs-SSE-vs-WebSocket" class="headerlink" title="Web 实时通信技术对比：HTTP vs SSE vs WebSocket"></a>Web 实时通信技术对比：HTTP vs SSE vs WebSocket</h1><h2 id="引言"><a href="#引言" class="headerlink" title="引言"></a>引言</h2><p>在现代 Web 应用开发中，客户端与服务器之间的实时通信变得越来越重要。从简单的数据获取到实时聊天、股票行情推送、协作编辑等场景，我们需要根据具体需求选择合适的通信方式。本文将深入探讨三种主流的 Web 通信技术：HTTP、Server-Sent Events (SSE) 和 WebSocket，帮助你在实际项目中做出最佳选择。</p>
+<h2 id="HTTP：经典的请求-响应模式"><a href="#HTTP：经典的请求-响应模式" class="headerlink" title="HTTP：经典的请求-响应模式"></a>HTTP：经典的请求-响应模式</h2><h3 id="基本原理"><a href="#基本原理" class="headerlink" title="基本原理"></a>基本原理</h3><p>HTTP（超文本传输协议）是 Web 的基础协议，采用典型的<strong>客户端-服务器</strong>模式和<strong>请求-响应</strong>机制。客户端发起请求，服务器返回响应，一次通信结束后连接即关闭（HTTP/1.0）或可复用（HTTP/1.1+ 的 Keep-Alive）。</p>
+<h3 id="核心特点"><a href="#核心特点" class="headerlink" title="核心特点"></a>核心特点</h3><ul>
+<li>  <strong>单向通信</strong>：只能由客户端主动发起请求</li>
+<li>  <strong>无状态</strong>：每个请求都是独立的，服务器不保存客户端状态</li>
+<li>  <strong>短连接</strong>：传统 HTTP 一次请求-响应后即断开</li>
+<li>  <strong>轮询开销</strong>：实现”实时”需要不断轮询，效率低下</li>
+</ul>
+<h3 id="适用场景"><a href="#适用场景" class="headerlink" title="适用场景"></a>适用场景</h3><ul>
+<li><p>  传统页面加载和刷新</p>
+</li>
+<li><p>  RESTful API 调用</p>
+</li>
+<li><p>  文件下载上传</p>
+</li>
+<li><p>不需要实时性的数据获取</p>
+<a id="more"></a>  
+
+</li>
+</ul>
+<h3 id="代码示例"><a href="#代码示例" class="headerlink" title="代码示例"></a>代码示例</h3><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 短轮询实现伪实时</span></span><br><span class="line"><span class="built_in">setInterval</span>(<span class="keyword">async</span> () =&gt; &#123;</span><br><span class="line">  <span class="keyword">const</span> response = <span class="keyword">await</span> fetch(<span class="string">&#x27;/api/messages&#x27;</span>);</span><br><span class="line">  <span class="keyword">const</span> data = <span class="keyword">await</span> response.json();</span><br><span class="line">  updateUI(data);</span><br><span class="line">&#125;, <span class="number">3000</span>); <span class="comment">// 每 3 秒请求一次</span></span><br></pre></td></tr></table></figure>
+<p><strong>缺点</strong>：频繁请求造成大量资源浪费，实时性差。</p>
+<h2 id="SSE：服务器向客户端的单向推送"><a href="#SSE：服务器向客户端的单向推送" class="headerlink" title="SSE：服务器向客户端的单向推送"></a>SSE：服务器向客户端的单向推送</h2><h3 id="基本原理-1"><a href="#基本原理-1" class="headerlink" title="基本原理"></a>基本原理</h3><p>Server-Sent Events 是 HTML5 引入的一种服务器推送技术，允许服务器通过 HTTP 连接向客户端持续推送数据。它基于 HTTP 协议，使用特殊的 <code>text/event-stream</code> MIME 类型。</p>
+<h3 id="核心特点-1"><a href="#核心特点-1" class="headerlink" title="核心特点"></a>核心特点</h3><ul>
+<li>  <strong>单向推送</strong>：服务器 → 客户端，客户端只能接收</li>
+<li>  <strong>基于 HTTP</strong>：无需特殊协议，防火墙友好</li>
+<li>  <strong>自动重连</strong>：连接断开后浏览器会自动尝试重连</li>
+<li>  <strong>事件 ID</strong>：支持断线续传，不会丢失消息</li>
+<li>  <strong>轻量简单</strong>：比 WebSocket 实现更简单</li>
+</ul>
+<h3 id="技术细节"><a href="#技术细节" class="headerlink" title="技术细节"></a>技术细节</h3><pre><code>HTTP/1.1 200 OK
+Content-Type: text/event-stream
+Cache-Control: no-cache
+Connection: keep-alive
+
+data: &#123;&quot;message&quot;: &quot;Hello World&quot;&#125;
+
+data: &#123;&quot;message&quot;: &quot;Second message&quot;&#125;
+
+id: 12345
+event: customEvent
+data: &#123;&quot;custom&quot;: &quot;data&quot;&#125;</code></pre>
+<h3 id="适用场景-1"><a href="#适用场景-1" class="headerlink" title="适用场景"></a>适用场景</h3><ul>
+<li>  股票行情、实时报价推送</li>
+<li>  新闻订阅、社交媒体更新</li>
+<li>  服务器日志实时监控</li>
+<li>  进度条更新（文件处理、任务进度）</li>
+<li>  通知推送</li>
+</ul>
+<h3 id="代码示例-1"><a href="#代码示例-1" class="headerlink" title="代码示例"></a>代码示例</h3><p><strong>客户端</strong>：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> eventSource = <span class="keyword">new</span> EventSource(<span class="string">&#x27;/api/stream&#x27;</span>);</span><br><span class="line"></span><br><span class="line">eventSource.onmessage = <span class="function">(<span class="params">event</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">const</span> data = <span class="built_in">JSON</span>.parse(event.data);</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">&#x27;收到消息:&#x27;</span>, data);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">eventSource.addEventListener(<span class="string">&#x27;customEvent&#x27;</span>, <span class="function">(<span class="params">event</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">&#x27;自定义事件:&#x27;</span>, event.data);</span><br><span class="line">&#125;);</span><br><span class="line"></span><br><span class="line">eventSource.onerror = <span class="function">(<span class="params">error</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.error(<span class="string">&#x27;连接错误:&#x27;</span>, error);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><strong>服务端（Node.js）</strong>：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">app.get(<span class="string">&#x27;/api/stream&#x27;</span>, <span class="function">(<span class="params">req, res</span>) =&gt;</span> &#123;</span><br><span class="line">  res.setHeader(<span class="string">&#x27;Content-Type&#x27;</span>, <span class="string">&#x27;text/event-stream&#x27;</span>);</span><br><span class="line">  res.setHeader(<span class="string">&#x27;Cache-Control&#x27;</span>, <span class="string">&#x27;no-cache&#x27;</span>);</span><br><span class="line">  res.setHeader(<span class="string">&#x27;Connection&#x27;</span>, <span class="string">&#x27;keep-alive&#x27;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> sendEvent = <span class="function">(<span class="params">data</span>) =&gt;</span> &#123;</span><br><span class="line">    res.write(<span class="string">`data: <span class="subst">$&#123;<span class="built_in">JSON</span>.stringify(data)&#125;</span>\n\n`</span>);</span><br><span class="line">  &#125;;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> interval = <span class="built_in">setInterval</span>(<span class="function">() =&gt;</span> &#123;</span><br><span class="line">    sendEvent(&#123; <span class="attr">time</span>: <span class="keyword">new</span> <span class="built_in">Date</span>().toISOString() &#125;);</span><br><span class="line">  &#125;, <span class="number">1000</span>);</span><br><span class="line"></span><br><span class="line">  req.on(<span class="string">&#x27;close&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">clearInterval</span>(interval);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h2 id="WebSocket：全双工双向通信"><a href="#WebSocket：全双工双向通信" class="headerlink" title="WebSocket：全双工双向通信"></a>WebSocket：全双工双向通信</h2><h3 id="基本原理-2"><a href="#基本原理-2" class="headerlink" title="基本原理"></a>基本原理</h3><p>WebSocket 是一种独立的、基于 TCP 的协议，通过 HTTP 握手升级后建立持久连接，实现<strong>全双工</strong>通信。客户端和服务器都可以主动发送消息。</p>
+<h3 id="核心特点-2"><a href="#核心特点-2" class="headerlink" title="核心特点"></a>核心特点</h3><ul>
+<li>  <strong>双向通信</strong>：客户端 ↔ 服务器，双方都可主动推送</li>
+<li>  <strong>持久连接</strong>：一次握手，长期保持</li>
+<li>  <strong>低延迟</strong>：无需 HTTP 头开销，数据帧轻量</li>
+<li>  <strong>实时性强</strong>：毫秒级延迟</li>
+<li>  <strong>二进制支持</strong>：可传输文本和二进制数据</li>
+</ul>
+<h3 id="连接建立过程"><a href="#连接建立过程" class="headerlink" title="连接建立过程"></a>连接建立过程</h3><pre><code>// 1. 客户端发起升级请求
+GET /chat HTTP/1.1
+Host: example.com
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Sec-WebSocket-Version: 13
+
+// 2. 服务器确认升级
+HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
+Connection: Upgrade
+Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=</code></pre>
+<h3 id="适用场景-2"><a href="#适用场景-2" class="headerlink" title="适用场景"></a>适用场景</h3><ul>
+<li>  即时聊天应用</li>
+<li>  多人在线游戏</li>
+<li>  协作编辑（Google Docs、Figma）</li>
+<li>  实时音视频通话信令</li>
+<li>  物联网设备通信</li>
+<li>  交易系统</li>
+</ul>
+<h3 id="代码示例-2"><a href="#代码示例-2" class="headerlink" title="代码示例"></a>代码示例</h3><p><strong>客户端</strong>：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> socket = <span class="keyword">new</span> WebSocket(<span class="string">&#x27;ws://example.com/socket&#x27;</span>);</span><br><span class="line"></span><br><span class="line">socket.onopen = <span class="function">() =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">&#x27;连接已建立&#x27;</span>);</span><br><span class="line">  socket.send(<span class="built_in">JSON</span>.stringify(&#123; <span class="attr">type</span>: <span class="string">&#x27;join&#x27;</span>, <span class="attr">user</span>: <span class="string">&#x27;Alice&#x27;</span> &#125;));</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">socket.onmessage = <span class="function">(<span class="params">event</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">const</span> data = <span class="built_in">JSON</span>.parse(event.data);</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">&#x27;收到消息:&#x27;</span>, data);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">socket.onclose = <span class="function">() =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">&#x27;连接已关闭&#x27;</span>);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line">socket.onerror = <span class="function">(<span class="params">error</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.error(<span class="string">&#x27;连接错误:&#x27;</span>, error);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 发送消息</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">sendMessage</span>(<span class="params">text</span>) </span>&#123;</span><br><span class="line">  socket.send(<span class="built_in">JSON</span>.stringify(&#123; <span class="attr">type</span>: <span class="string">&#x27;message&#x27;</span>, text &#125;));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><strong>服务端（Node.js + ws）</strong>：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> WebSocket = <span class="built_in">require</span>(<span class="string">&#x27;ws&#x27;</span>);</span><br><span class="line"><span class="keyword">const</span> wss = <span class="keyword">new</span> WebSocket.Server(&#123; <span class="attr">port</span>: <span class="number">8080</span> &#125;);</span><br><span class="line"></span><br><span class="line">wss.on(<span class="string">&#x27;connection&#x27;</span>, <span class="function">(<span class="params">ws</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="built_in">console</span>.log(<span class="string">&#x27;新客户端连接&#x27;</span>);</span><br><span class="line"></span><br><span class="line">  ws.on(<span class="string">&#x27;message&#x27;</span>, <span class="function">(<span class="params">message</span>) =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">&#x27;收到:&#x27;</span>, message);</span><br><span class="line">    </span><br><span class="line">    <span class="comment">// 广播给所有客户端</span></span><br><span class="line">    wss.clients.forEach(<span class="function">(<span class="params">client</span>) =&gt;</span> &#123;</span><br><span class="line">      <span class="keyword">if</span> (client.readyState === WebSocket.OPEN) &#123;</span><br><span class="line">        client.send(message);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  ws.on(<span class="string">&#x27;close&#x27;</span>, <span class="function">() =&gt;</span> &#123;</span><br><span class="line">    <span class="built_in">console</span>.log(<span class="string">&#x27;客户端断开&#x27;</span>);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<h2 id="三者详细对比"><a href="#三者详细对比" class="headerlink" title="三者详细对比"></a>三者详细对比</h2><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>HTTP</th>
+<th>SSE</th>
+<th>WebSocket</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>通信方向</strong></td>
+<td>单向（客户端 → 服务器）</td>
+<td>单向（服务器 → 客户端）</td>
+<td>双向（客户端 ↔ 服务器）</td>
+</tr>
+<tr>
+<td><strong>协议</strong></td>
+<td>HTTP</td>
+<td>HTTP（基于 HTTP）</td>
+<td>独立协议（基于 TCP）</td>
+</tr>
+<tr>
+<td><strong>连接类型</strong></td>
+<td>短连接/Keep-Alive</td>
+<td>长连接</td>
+<td>持久连接</td>
+</tr>
+<tr>
+<td><strong>实时性</strong></td>
+<td>差（需轮询）</td>
+<td>好</td>
+<td>优秀</td>
+</tr>
+<tr>
+<td><strong>服务器推送</strong></td>
+<td>不支持</td>
+<td>支持</td>
+<td>支持</td>
+</tr>
+<tr>
+<td><strong>浏览器兼容性</strong></td>
+<td>所有浏览器</td>
+<td>IE 不支持，其他主流浏览器支持</td>
+<td>现代浏览器均支持</td>
+</tr>
+<tr>
+<td><strong>数据格式</strong></td>
+<td>任意</td>
+<td>文本（UTF-8）</td>
+<td>文本 + 二进制</td>
+</tr>
+<tr>
+<td><strong>重连机制</strong></td>
+<td>无需</td>
+<td>自动重连</td>
+<td>需手动实现</td>
+</tr>
+<tr>
+<td><strong>协议开销</strong></td>
+<td>高（每次请求都有完整 HTTP 头）</td>
+<td>中（初始建立连接）</td>
+<td>低（握手后仅数据帧）</td>
+</tr>
+<tr>
+<td><strong>实现复杂度</strong></td>
+<td>简单</td>
+<td>简单</td>
+<td>中等</td>
+</tr>
+<tr>
+<td><strong>防火墙友好</strong></td>
+<td>是</td>
+<td>是</td>
+<td>取决于配置</td>
+</tr>
+<tr>
+<td><strong>代理支持</strong></td>
+<td>完全支持</td>
+<td>支持</td>
+<td>部分代理可能有问题</td>
+</tr>
+</tbody></table>
+<h2 id="性能对比"><a href="#性能对比" class="headerlink" title="性能对比"></a>性能对比</h2><h3 id="延迟"><a href="#延迟" class="headerlink" title="延迟"></a>延迟</h3><ul>
+<li>  <strong>HTTP 轮询</strong>：取决于轮询间隔，通常秒级延迟</li>
+<li>  <strong>SSE</strong>：毫秒到秒级，接近实时</li>
+<li>  <strong>WebSocket</strong>：毫秒级，最低延迟</li>
+</ul>
+<h3 id="带宽消耗"><a href="#带宽消耗" class="headerlink" title="带宽消耗"></a>带宽消耗</h3><p>假设每秒发送一条消息：</p>
+<pre><code>HTTP 轮询：
+- 请求头: ~800 bytes
+- 响应头: ~200 bytes
+- 每秒消耗: 1 KB × 2 = 2 KB/s （即使无数据更新）
+
+SSE：
+- 初始连接: ~1 KB
+- 每条消息: 数据 + &quot;\n\n&quot; ≈ 数据大小
+- 每秒消耗: 数据大小
+
+WebSocket：
+- 初始握手: ~500 bytes
+- 每条消息: 数据 + 2-14 bytes（帧头）
+- 每秒消耗: 数据大小 + 最小开销</code></pre>
+<h3 id="服务器负载"><a href="#服务器负载" class="headerlink" title="服务器负载"></a>服务器负载</h3><ul>
+<li>  <strong>HTTP 轮询</strong>：最高（频繁建立连接）</li>
+<li>  <strong>SSE</strong>：中等（维持长连接）</li>
+<li>  <strong>WebSocket</strong>：最低（连接复用，轻量数据帧）</li>
+</ul>
+<h2 id="如何选择？"><a href="#如何选择？" class="headerlink" title="如何选择？"></a>如何选择？</h2><h3 id="选择-HTTP-当："><a href="#选择-HTTP-当：" class="headerlink" title="选择 HTTP 当："></a>选择 HTTP 当：</h3><ul>
+<li>  ✅ 不需要实时性（如传统 CRUD 操作）</li>
+<li>  ✅ 简单的 API 调用</li>
+<li>  ✅ 需要最大兼容性</li>
+<li>  ✅ 无状态的请求</li>
+</ul>
+<h3 id="选择-SSE-当："><a href="#选择-SSE-当：" class="headerlink" title="选择 SSE 当："></a>选择 SSE 当：</h3><ul>
+<li>  ✅ 只需要服务器单向推送</li>
+<li>  ✅ 需要自动重连机制</li>
+<li>  ✅ 追踪事件历史（Event ID）</li>
+<li>  ✅ 实现简单优先</li>
+<li>  ✅ 防火墙/代理环境严格</li>
+<li>  ❌ 需要客户端频繁向服务器发送数据</li>
+</ul>
+<h3 id="选择-WebSocket-当："><a href="#选择-WebSocket-当：" class="headerlink" title="选择 WebSocket 当："></a>选择 WebSocket 当：</h3><ul>
+<li>  ✅ 需要双向实时通信</li>
+<li>  ✅ 低延迟要求（如游戏、交易）</li>
+<li>  ✅ 高频率消息传输</li>
+<li>  ✅ 需要传输二进制数据</li>
+<li>  ✅ 客户端需要主动向服务器推送</li>
+<li>  ❌ 对老旧浏览器兼容性要求高</li>
+</ul>
+<h2 id="实际案例分析"><a href="#实际案例分析" class="headerlink" title="实际案例分析"></a>实际案例分析</h2><h3 id="案例-1：社交媒体通知"><a href="#案例-1：社交媒体通知" class="headerlink" title="案例 1：社交媒体通知"></a>案例 1：社交媒体通知</h3><p><strong>推荐：SSE</strong></p>
+<ul>
+<li>  服务器单向推送通知</li>
+<li>  自动重连确保不丢消息</li>
+<li>  实现简单，维护成本低</li>
+</ul>
+<h3 id="案例-2：在线聊天应用"><a href="#案例-2：在线聊天应用" class="headerlink" title="案例 2：在线聊天应用"></a>案例 2：在线聊天应用</h3><p><strong>推荐：WebSocket</strong></p>
+<ul>
+<li>  用户需要频繁发送和接收消息</li>
+<li>  低延迟要求</li>
+<li>  支持图片等二进制内容</li>
+</ul>
+<h3 id="案例-3：股票行情显示"><a href="#案例-3：股票行情显示" class="headerlink" title="案例 3：股票行情显示"></a>案例 3：股票行情显示</h3><p><strong>推荐：SSE</strong></p>
+<ul>
+<li>  服务器持续推送价格更新</li>
+<li>  客户端只需展示，无需发送</li>
+<li>  断线重连自动恢复</li>
+</ul>
+<h3 id="案例-4：多人协作白板"><a href="#案例-4：多人协作白板" class="headerlink" title="案例 4：多人协作白板"></a>案例 4：多人协作白板</h3><p><strong>推荐：WebSocket</strong></p>
+<ul>
+<li>  多个用户同时绘制</li>
+<li>  需要实时同步每个操作</li>
+<li>  双向高频通信</li>
+</ul>
+<h3 id="案例-5：数据仪表盘"><a href="#案例-5：数据仪表盘" class="headerlink" title="案例 5：数据仪表盘"></a>案例 5：数据仪表盘</h3><p><strong>推荐：HTTP + SSE 组合</strong></p>
+<ul>
+<li>  初始数据加载用 HTTP</li>
+<li>  后续更新用 SSE 推送</li>
+<li>  平衡实现复杂度和性能</li>
+</ul>
+<h3 id="案例-6：AI-对话系统（ChatGPT、Claude-等）"><a href="#案例-6：AI-对话系统（ChatGPT、Claude-等）" class="headerlink" title="案例 6：AI 对话系统（ChatGPT、Claude 等）"></a>案例 6：AI 对话系统（ChatGPT、Claude 等）</h3><p><strong>推荐：SSE</strong></p>
+<ul>
+<li>  服务器实时流式输出 AI 生成的文本</li>
+<li>  用户体验更佳，无需等待完整响应</li>
+<li>  单向推送符合 AI 对话场景</li>
+<li>  实现简单，成本低</li>
+</ul>
+<p><strong>为什么 AI 对话系统选择 SSE？</strong></p>
+<p>现代 AI 对话系统（如 ChatGPT、Claude、Gemini 等）普遍采用 SSE 技术实现流式响应，这是因为：</p>
+<ol>
+<li><p> <strong>改善用户体验</strong>：AI 模型生成长文本可能需要几秒甚至十几秒，传统 HTTP 请求会让用户等待很久才能看到结果。使用 SSE 可以逐字逐句地流式输出，用户能实时看到生成过程，体验类似打字效果。</p>
+</li>
+<li><p> <strong>单向通信特性</strong>：在对话场景中，用户发送问题后，AI 需要持续输出答案，这是典型的服务器向客户端单向推送场景，SSE 完美匹配。</p>
+</li>
+<li><p> <strong>自动重连机制</strong>：如果网络出现短暂中断，SSE 会自动重连，确保用户不会丢失部分回答。</p>
+</li>
+<li><p> <strong>实现简单</strong>：相比 WebSocket，SSE 不需要处理双向消息协调，代码更简洁，服务器负载更低。</p>
+</li>
+<li><p> <strong>兼容性好</strong>：基于 HTTP 协议，与现有基础设施（负载均衡、CDN、代理服务器）完美兼容。</p>
+</li>
+</ol>
+<p><strong>实际代码示例</strong>：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// AI 对话客户端实现</span></span><br><span class="line"><span class="keyword">async</span> <span class="function"><span class="keyword">function</span> <span class="title">chatWithAI</span>(<span class="params">userMessage</span>) </span>&#123;</span><br><span class="line">  <span class="keyword">const</span> response = <span class="keyword">await</span> fetch(<span class="string">&#x27;/api/chat&#x27;</span>, &#123;</span><br><span class="line">    method: <span class="string">&#x27;POST&#x27;</span>,</span><br><span class="line">    headers: &#123; <span class="string">&#x27;Content-Type&#x27;</span>: <span class="string">&#x27;application/json&#x27;</span> &#125;,</span><br><span class="line">    body: <span class="built_in">JSON</span>.stringify(&#123; <span class="attr">message</span>: userMessage &#125;)</span><br><span class="line">  &#125;);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> reader = response.body.getReader();</span><br><span class="line">  <span class="keyword">const</span> decoder = <span class="keyword">new</span> TextDecoder();</span><br><span class="line">  <span class="keyword">let</span> aiResponse = <span class="string">&#x27;&#x27;</span>;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    <span class="keyword">const</span> &#123; done, value &#125; = <span class="keyword">await</span> reader.read();</span><br><span class="line">    <span class="keyword">if</span> (done) <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">const</span> chunk = decoder.decode(value, &#123; <span class="attr">stream</span>: <span class="literal">true</span> &#125;);</span><br><span class="line">    <span class="keyword">const</span> lines = chunk.split(<span class="string">&#x27;\n&#x27;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">const</span> line <span class="keyword">of</span> lines) &#123;</span><br><span class="line">      <span class="keyword">if</span> (line.startsWith(<span class="string">&#x27;data: &#x27;</span>)) &#123;</span><br><span class="line">        <span class="keyword">const</span> data = line.slice(<span class="number">6</span>);</span><br><span class="line">        <span class="keyword">if</span> (data === <span class="string">&#x27;[DONE]&#x27;</span>) <span class="keyword">break</span>;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">          <span class="keyword">const</span> json = <span class="built_in">JSON</span>.parse(data);</span><br><span class="line">          <span class="keyword">const</span> token = json.choices[<span class="number">0</span>].delta.content || <span class="string">&#x27;&#x27;</span>;</span><br><span class="line">          aiResponse += token;</span><br><span class="line">          </span><br><span class="line">          <span class="comment">// 实时更新 UI，逐字显示</span></span><br><span class="line">          updateChatUI(aiResponse);</span><br><span class="line">        &#125; <span class="keyword">catch</span> (e) &#123;</span><br><span class="line">          <span class="built_in">console</span>.error(<span class="string">&#x27;解析错误:&#x27;</span>, e);</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// OpenAI 风格的调用方式</span></span><br><span class="line"><span class="keyword">const</span> eventSource = <span class="keyword">new</span> EventSource(<span class="string">&#x27;/api/chat/stream?prompt=你好&#x27;</span>);</span><br><span class="line"></span><br><span class="line">eventSource.onmessage = <span class="function">(<span class="params">event</span>) =&gt;</span> &#123;</span><br><span class="line">  <span class="keyword">if</span> (event.data === <span class="string">&#x27;[DONE]&#x27;</span>) &#123;</span><br><span class="line">    eventSource.close();</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">const</span> token = <span class="built_in">JSON</span>.parse(event.data).token;</span><br><span class="line">  appendToMessage(token); <span class="comment">// 逐个追加 token</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+<p><strong>服务端流式返回</strong>：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Node.js + Express 实现 AI 流式响应</span></span><br><span class="line">app.post(<span class="string">&#x27;/api/chat&#x27;</span>, <span class="keyword">async</span> (req, res) =&gt; &#123;</span><br><span class="line">  <span class="keyword">const</span> &#123; message &#125; = req.body;</span><br><span class="line"></span><br><span class="line">  res.setHeader(<span class="string">&#x27;Content-Type&#x27;</span>, <span class="string">&#x27;text/event-stream&#x27;</span>);</span><br><span class="line">  res.setHeader(<span class="string">&#x27;Cache-Control&#x27;</span>, <span class="string">&#x27;no-cache&#x27;</span>);</span><br><span class="line">  res.setHeader(<span class="string">&#x27;Connection&#x27;</span>, <span class="string">&#x27;keep-alive&#x27;</span>);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="comment">// 调用 AI 模型（如 OpenAI API）</span></span><br><span class="line">    <span class="keyword">const</span> stream = <span class="keyword">await</span> openai.chat.completions.create(&#123;</span><br><span class="line">      model: <span class="string">&#x27;gpt-4&#x27;</span>,</span><br><span class="line">      messages: [&#123; <span class="attr">role</span>: <span class="string">&#x27;user&#x27;</span>, <span class="attr">content</span>: message &#125;],</span><br><span class="line">      stream: <span class="literal">true</span>, <span class="comment">// 开启流式模式</span></span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 逐个 token 推送给客户端</span></span><br><span class="line">    <span class="keyword">for</span> <span class="keyword">await</span> (<span class="keyword">const</span> chunk <span class="keyword">of</span> stream) &#123;</span><br><span class="line">      <span class="keyword">const</span> token = chunk.choices[<span class="number">0</span>]?.delta?.content || <span class="string">&#x27;&#x27;</span>;</span><br><span class="line">      <span class="keyword">if</span> (token) &#123;</span><br><span class="line">        res.write(<span class="string">`data: <span class="subst">$&#123;<span class="built_in">JSON</span>.stringify(&#123; token &#125;)&#125;</span>\n\n`</span>);</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 发送结束信号</span></span><br><span class="line">    res.write(<span class="string">&#x27;data: [DONE]\n\n&#x27;</span>);</span><br><span class="line">    res.end();</span><br><span class="line">  &#125; <span class="keyword">catch</span> (error) &#123;</span><br><span class="line">    res.write(<span class="string">`data: <span class="subst">$&#123;<span class="built_in">JSON</span>.stringify(&#123; error: error.message &#125;)&#125;</span>\n\n`</span>);</span><br><span class="line">    res.end();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
+<p><strong>性能优势对比</strong>：</p>
+<table>
+<thead>
+<tr>
+<th>方式</th>
+<th>首字节时间</th>
+<th>总响应时间</th>
+<th>用户感知</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>传统 HTTP</strong></td>
+<td>10 秒</td>
+<td>10 秒</td>
+<td>等待 10 秒后一次性显示</td>
+</tr>
+<tr>
+<td><strong>SSE 流式</strong></td>
+<td>200ms</td>
+<td>10 秒</td>
+<td>200ms 后开始逐字显示</td>
+</tr>
+</tbody></table>
+<p>通过 SSE 流式输出，虽然总响应时间相同，但用户感知到的等待时间大幅降低，交互体验显著提升。</p>
+<p><strong>实际应用案例</strong>：</p>
+<ul>
+<li>  <strong>ChatGPT</strong>：使用 SSE 实现打字机效果的流式回答</li>
+<li>  <strong>Claude</strong>：采用类似技术提供实时响应体验</li>
+<li>  <strong>GitHub Copilot Chat</strong>：代码解释和生成使用流式输出</li>
+<li>  <strong>Perplexity AI</strong>：搜索结果和答案实时流式展示</li>
+<li>  <strong>各类 AI 编程助手</strong>：代码生成过程实时可见</li>
+</ul>
+<p>这也是为什么你在使用这些 AI 工具时，能看到文字一个个”打”出来，而不是等待很久后突然出现一大段文本。这种技术选择极大地改善了 AI 交互的用户体验。</p>
+<h2 id="进阶话题"><a href="#进阶话题" class="headerlink" title="进阶话题"></a>进阶话题</h2><h3 id="HTTP-2-Server-Push"><a href="#HTTP-2-Server-Push" class="headerlink" title="HTTP/2 Server Push"></a>HTTP/2 Server Push</h3><p>HTTP/2 引入了服务器推送功能，但它与 SSE 不同：</p>
+<ul>
+<li>  <strong>HTTP/2 Push</strong>：主动推送资源（CSS、JS）到客户端缓存</li>
+<li>  <strong>SSE</strong>：持续推送数据流</li>
+</ul>
+<p>两者解决的问题不同，不是替代关系。</p>
+<h3 id="混合方案"><a href="#混合方案" class="headerlink" title="混合方案"></a>混合方案</h3><p>实际项目中可以组合使用：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 使用 HTTP 进行初始化数据加载</span></span><br><span class="line"><span class="keyword">const</span> initData = <span class="keyword">await</span> fetch(<span class="string">&#x27;/api/init&#x27;</span>).then(<span class="function"><span class="params">r</span> =&gt;</span> r.json());</span><br><span class="line"></span><br><span class="line"><span class="comment">// 使用 WebSocket 进行实时更新</span></span><br><span class="line"><span class="keyword">const</span> ws = <span class="keyword">new</span> WebSocket(<span class="string">&#x27;ws://example.com/realtime&#x27;</span>);</span><br><span class="line">ws.onmessage = <span class="function">(<span class="params">event</span>) =&gt;</span> &#123;</span><br><span class="line">  updateData(event.data);</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 使用 HTTP 进行文件上传</span></span><br><span class="line"><span class="keyword">const</span> formData = <span class="keyword">new</span> FormData();</span><br><span class="line">formData.append(<span class="string">&#x27;file&#x27;</span>, file);</span><br><span class="line"><span class="keyword">await</span> fetch(<span class="string">&#x27;/api/upload&#x27;</span>, &#123; <span class="attr">method</span>: <span class="string">&#x27;POST&#x27;</span>, <span class="attr">body</span>: formData &#125;);</span><br></pre></td></tr></table></figure>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><ul>
+<li>  <strong>HTTP</strong> 是 Web 的基石，适合传统请求-响应场景</li>
+<li>  <strong>SSE</strong> 简单高效，适合服务器向客户端的单向推送</li>
+<li>  <strong>WebSocket</strong> 强大灵活，适合需要双向实时通信的场景</li>
+</ul>
+<p>没有”最好”的技术，只有”最合适”的选择。根据实际需求权衡实时性、复杂度、兼容性和成本，才能做出明智的技术决策。</p>
+<p>在实践中，还需要考虑：</p>
+<ul>
+<li>  服务器架构（是否支持大量长连接）</li>
+<li>  网络环境（代理、防火墙策略）</li>
+<li>  浏览器兼容性要求</li>
+<li>  团队技术栈和维护能力</li>
+</ul>
+<p>希望这篇文章能帮助你在下一个项目中选择最合适的通信方案！</p>
+</div><div class="article-licensing box"><div class="licensing-title"><p>Web 实时通信技术对比：HTTP vs SSE vs WebSocket</p><p><a href="https://hjb.leheavengame.com/2025/03/22/Web-实时通信技术对比：HTTP-vs-SSE-vs-WebSocket/">https://hjb.leheavengame.com/2025/03/22/Web-实时通信技术对比：HTTP-vs-SSE-vs-WebSocket/</a></p></div><div class="licensing-meta level is-mobile"><div class="level-left"><div class="level-item is-narrow"><div><h6>作者</h6><a href="https://hjb.leheavengame.com"><p>hujinbin</p></a></div></div><div class="level-item is-narrow"><div><h6>发布于</h6><p>2025-03-22</p></div></div><div class="level-item is-narrow"><div><h6>更新于</h6><p>2026-10-12</p></div></div><div class="level-item is-narrow"><div><h6>许可协议</h6><p><a class="icon" rel="noopener" target="_blank" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a><a class="icon" rel="noopener" target="_blank" title="Attribution" href="https://creativecommons.org/licenses/by/4.0/"><i class="fab fa-creative-commons-by"></i></a><a class="icon" rel="noopener" target="_blank" title="Noncommercial" href="https://creativecommons.org/licenses/by-nc/4.0/"><i class="fab fa-creative-commons-nc"></i></a></p></div></div></div></div></div><div class="recommend-area"><div class="recommend-post"><span class="is-size-6 has-text-grey has-mr-7"># 相关文章</span><br><span>  1.<a class="is-size-6" href="/2026/11/08/%E5%89%8D%E7%AB%AF%E6%80%8E%E4%B9%88%E7%94%A8-WebAssembly%EF%BC%9F%E4%BB%8E%E4%B8%80%E4%B8%AA%E6%B5%8F%E8%A7%88%E5%99%A8%E5%9B%BE%E7%89%87%E5%8E%8B%E7%BC%A9%E5%B7%A5%E5%85%B7%E8%AF%B4%E8%B5%B7/" target="_blank">前端怎么用 WebAssembly？从一个浏览器图片压缩工具说起</a><br></span><span>  2.<a class="is-size-6" href="/2026/08/07/Claude-Code-%E6%B3%84%E9%9C%B2%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-%E4%BB%8E-Agent-%E5%BE%AA%E7%8E%AF%E5%88%B0%E5%B7%A5%E5%85%B7%E6%9D%83%E9%99%90%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86/" target="_blank">Claude Code 泄露源码解读,从 Agent 循环到工具权限与上下文管理</a><br></span><span>  3.<a class="is-size-6" href="/2026/03/25/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%8F%91-AI-Skill%EF%BC%9A%E6%89%93%E9%80%A0%E4%BD%A0%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA-AI-%E8%83%BD%E5%8A%9B%E6%89%A9%E5%B1%95/" target="_blank">从零开发 AI Skill：打造你的第一个 AI 能力扩展</a><br></span><span>  4.<a class="is-size-6" href="/2026/03/08/AI-%E6%97%B6%E4%BB%A3%E5%BF%85%E5%A4%87%E6%8A%80%E8%83%BD%E6%8C%87%E5%8D%97%EF%BC%9A%E4%BB%8E-Prompt-%E6%96%B0%E6%89%8B%E5%88%B0-AI-%E4%B8%93%E5%AE%B6%E7%9A%84%E8%BF%9B%E9%98%B6%E8%B7%AF/" target="_blank">AI 时代必备技能指南：从 Prompt 新手到 AI 专家的进阶路</a><br></span><span>  5.<a class="is-size-6" href="/2026/01/23/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3-Model-Context-Protocol%EF%BC%9A%E4%BB%8E%E9%9B%B6%E6%9E%84%E5%BB%BA-AI-%E7%9F%A5%E8%AF%86%E5%BA%93%E6%9C%8D%E5%8A%A1/" target="_blank">深入理解 Model Context Protocol：从零构建 AI 知识库服务</a><br></span><span>  6.<a class="is-size-6" href="/2025/12/25/%E4%BB%8E%E9%9B%B6%E6%89%93%E9%80%A0%E4%B8%80%E4%B8%AA%E8%B7%A8%E6%A1%86%E6%9E%B6%E9%80%9A%E7%94%A8%E7%9A%84-AI-Agent-%E6%8F%92%E4%BB%B6/" target="_blank">从零打造一个跨框架通用的 AI Agent 插件</a><br></span><span>  7.<a class="is-size-6" href="/2025/10/03/AI-Tools-%E5%AE%8C%E5%85%A8%E6%8C%87%E5%8D%97%EF%BC%9A%E4%BB%8E%E9%80%89%E6%8B%A9%E5%88%B0%E9%9B%86%E6%88%90%E7%9A%84%E5%85%A8%E9%93%BE%E8%B7%AF%E5%AE%9E%E8%B7%B5/" target="_blank">AI Tools 完全指南：从选择到集成的全链路实践</a><br></span><span>  8.<a class="is-size-6" href="/2025/08/09/Web3-js-v4-%E5%AE%8C%E6%95%B4%E4%BD%BF%E7%94%A8%E6%8C%87%E5%8D%97/" target="_blank">Web3.js v4 完整使用指南</a><br></span></div></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/social-share.js/1.0.16/css/share.min.css"><div class="social-share"></div><script src="https://cdnjs.loli.net/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script></article></div><div class="card"><div class="card-content"><h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3><div class="buttons is-centered"><a class="button donate" data-type="alipay"><span class="icon is-small"><i class="fab fa-alipay"></i></span><span>支付宝</span><span class="qrcode"><img src="https://img.alicdn.com/imgextra/i4/2509590220/TB2GxhZfjnD8KJjSspbXXbbEXXa_!!2509590220.jpg" alt="支付宝"></span></a><a class="button donate" data-type="wechat"><span class="icon is-small"><i class="fab fa-weixin"></i></span><span>微信</span><span class="qrcode"><img src="https://img.alicdn.com/imgextra/i1/2509590220/TB2K0hPfdnJ8KJjSszdXXaxuFXa_!!2509590220.png" alt="微信"></span></a></div></div></div><nav class="post-navigation mt-4 level is-mobile"><div class="level-start"><a class="article-nav-prev level level-item link-muted" href="/2025/06/23/AI-Agent%EF%BC%9A%E4%BB%8E%E5%AF%B9%E8%AF%9D%E5%B7%A5%E5%85%B7%E5%88%B0%E6%99%BA%E8%83%BD%E5%8A%A9%E6%89%8B%E7%9A%84%E8%BF%9B%E5%8C%96%E4%B9%8B%E8%B7%AF/"><i class="level-item fas fa-chevron-left"></i><span class="level-item">AI Agent：从对话工具到智能助手的进化之路</span></a></div><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/2024/06/13/Docker-%E5%85%A5%E9%97%A8%E6%8C%87%E5%8D%97%EF%BC%9A%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%A7%8B%E6%8E%8C%E6%8F%A1%E5%AE%B9%E5%99%A8%E5%8C%96%E6%8A%80%E6%9C%AF/"><span class="level-item">Docker 入门指南：从零开始掌握容器化技术</span><i class="level-item fas fa-chevron-right"></i></a></div></nav><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><div class="card"><div class="card-content"><div class="title is-5">评论</div><div id="comment-container"></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/gitalk/1.6.0/gitalk.css"><script> $.getScript('/js/gitalk.min.js', function () {
+            var cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
+            var gitalk = new Gitalk({
+            language:'zh-CN',
+            id: '2d869f24c852cec231f54482c2497a24',
+            title: "Web 实时通信技术对比：HTTP vs SSE vs WebSocket",
+            url: cleanUrl,
+            repo: 'myBlog',
+            owner: 'hujinbin',
+            clientID: '805d0c127d7edb5532bb',
+            clientSecret: '89de913bcdc87f3e47e916e5516f21ae8f0a69dd',
+            admin: ["hujinbin"],
+            createIssueManually: false,
+            distractionFreeMode: false,
+            perPage: 10,
+            pagerDirection: 'last',
+            labels: ["Gitalk"],
+            proxy: 'https://www.leheavengame.com/api/github/oauth/access_token',
+            
+            enableHotKey: true,
+            isLocked: false
+        })
+        gitalk.render('comment-container')});</script></div></div></div><div class="column column-left is-4-tablet is-4-desktop is-3-widescreen  order-1 is-sticky"><!--!--><div class="card widget" data-type="profile"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="avatar is-rounded" src="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg" alt="胡金斌"></figure><p class="title is-size-4 is-block" style="line-height:inherit;">胡金斌</p><p class="is-size-6 is-block">web前端开发工程师</p><p class="is-size-6 is-flex justify-content-center"><i class="fas fa-map-marker-alt mr-1"></i><span>浙江杭州</span></p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">文章</p><a href="/archives"><p class="title">58</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">分类</p><a href="/categories"><p class="title">0</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">标签</p><a href="/tags"><p class="title">63</p></a></div></div></nav><div class="level"><a class="level-item button is-primary is-rounded" href="https://github.com/hujinbin" target="_blank" rel="noopener">关注我</a></div><div class="level is-mobile"><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="Github" href="https://github.com/hujinbin"><i class="fab fa-github"></i></a><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="Email" href="mailto:437044048@qq.com"><i class="fa fa-envelope"></i></a><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="RSS" href="/atom.xml"><i class="fas fa-rss"></i></a></div><div><hr><p id="hitokoto">:D 一言句子获取中...</p><script type="text/javascript" defer>function getYiyan(){
+                                $.getJSON("https://v1.hitokoto.cn/", function (data) {
+                                if(data){
+                                    $('#hitokoto').html("");
+                                    $('#hitokoto').append("<strong style='color: #3273dc;'>"+data.hitokoto+"</strong>"+
+                                    "<p>"+"来源《"+data.from+"》</p><p>提供者-"+data.creator+"</p>");
+                                }});}
+                                $(function (){getYiyan();$('#hitokoto').click(function(){getYiyan();})});</script></div></div></div><div class="card widget" data-type="links"><div class="card-content"><div class="menu"><h3 class="menu-label">链接</h3><ul class="menu-list"><li><a class="level is-mobile" href="https://cash.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惠shop好货</span></span><span class="level-right"><span class="level-item tag">cash.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://jue.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惊觉</span></span><span class="level-right"><span class="level-item tag">jue.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://bbs.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">乾学网</span></span><span class="level-right"><span class="level-item tag">bbs.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://guide.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">乾坤宝录</span></span><span class="level-right"><span class="level-item tag">guide.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://coupon.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惠shop</span></span><span class="level-right"><span class="level-item tag">coupon.leheavengame.com</span></span></a></li></ul></div></div></div><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><!--!--><div class="card widget"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-11-08T13:19:36.000Z">2026-11-08</time></p><p class="title"><a href="/2026/11/08/%E5%89%8D%E7%AB%AF%E6%80%8E%E4%B9%88%E7%94%A8-WebAssembly%EF%BC%9F%E4%BB%8E%E4%B8%80%E4%B8%AA%E6%B5%8F%E8%A7%88%E5%99%A8%E5%9B%BE%E7%89%87%E5%8E%8B%E7%BC%A9%E5%B7%A5%E5%85%B7%E8%AF%B4%E8%B5%B7/">前端怎么用 WebAssembly？从一个浏览器图片压缩工具说起</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-08-07T09:40:07.000Z">2026-08-07</time></p><p class="title"><a href="/2026/08/07/Claude-Code-%E6%B3%84%E9%9C%B2%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-%E4%BB%8E-Agent-%E5%BE%AA%E7%8E%AF%E5%88%B0%E5%B7%A5%E5%85%B7%E6%9D%83%E9%99%90%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86/">Claude Code 泄露源码解读,从 Agent 循环到工具权限与上下文管理</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-03-25T14:21:39.000Z">2026-03-25</time></p><p class="title"><a href="/2026/03/25/%E4%BB%8E%E9%9B%B6%E5%BC%80%E5%8F%91-AI-Skill%EF%BC%9A%E6%89%93%E9%80%A0%E4%BD%A0%E7%9A%84%E7%AC%AC%E4%B8%80%E4%B8%AA-AI-%E8%83%BD%E5%8A%9B%E6%89%A9%E5%B1%95/">从零开发 AI Skill：打造你的第一个 AI 能力扩展</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-03-08T15:14:00.000Z">2026-03-08</time></p><p class="title"><a href="/2026/03/08/AI-%E6%97%B6%E4%BB%A3%E5%BF%85%E5%A4%87%E6%8A%80%E8%83%BD%E6%8C%87%E5%8D%97%EF%BC%9A%E4%BB%8E-Prompt-%E6%96%B0%E6%89%8B%E5%88%B0-AI-%E4%B8%93%E5%AE%B6%E7%9A%84%E8%BF%9B%E9%98%B6%E8%B7%AF/">AI 时代必备技能指南：从 Prompt 新手到 AI 专家的进阶路</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-01-23T14:21:48.000Z">2026-01-23</time></p><p class="title"><a href="/2026/01/23/%E6%B7%B1%E5%85%A5%E7%90%86%E8%A7%A3-Model-Context-Protocol%EF%BC%9A%E4%BB%8E%E9%9B%B6%E6%9E%84%E5%BB%BA-AI-%E7%9F%A5%E8%AF%86%E5%BA%93%E6%9C%8D%E5%8A%A1/">深入理解 Model Context Protocol：从零构建 AI 知识库服务</a></p></div></article></div></div><!--!--><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">归档</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/archives/2026/11/"><span class="level-start"><span class="level-item">十一月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/08/"><span class="level-start"><span class="level-item">八月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/03/"><span class="level-start"><span class="level-item">三月 2026</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/01/"><span class="level-start"><span class="level-item">一月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2025/12/"><span class="level-start"><span class="level-item">十二月 2025</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><a class="level is-mobile is-marginless" href="/archives/"><span class="level-start"><span class="level-item">查看全部&gt;&gt;</span></span></a></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">标签</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/javascript/"><span class="tag">javascript</span><span class="tag is-grey-lightest">39</span></a></div><div class="control"><a class="tags has-addons" href="/tags/node/"><span class="tag">node</span><span class="tag is-grey-lightest">6</span></a></div><div class="control"><a class="tags has-addons" href="/tags/Vue/"><span class="tag">Vue</span><span class="tag is-grey-lightest">5</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Agent/"><span class="tag">AI Agent</span><span class="tag is-grey-lightest">4</span></a></div><div class="control"><a class="tags has-addons" href="/tags/TypeScript/"><span class="tag">TypeScript</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/css/"><span class="tag">css</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI/"><span class="tag">AI</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Tools/"><span class="tag">AI Tools</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/MCP/"><span class="tag">MCP</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/http/"><span class="tag">http</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91/"><span class="tag">前端开发</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/3D%E5%8F%AF%E8%A7%86%E5%8C%96/"><span class="tag">3D可视化</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Skill/"><span class="tag">AI Skill</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7/"><span class="tag">AI 工具</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E5%AE%9E%E8%B7%B5/"><span class="tag">AI 工具实践</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E5%BC%80%E5%8F%91/"><span class="tag">AI 工具开发</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E6%8C%87%E5%8D%97/"><span class="tag">AI 工具指南</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E7%94%9F%E6%80%81/"><span class="tag">AI 工具生态</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E9%80%89%E5%9E%8B/"><span class="tag">AI 工具选型</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-%E5%B7%A5%E5%85%B7%E9%9B%86%E6%88%90/"><span class="tag">AI 工具集成</span><span class="tag is-grey-lightest">1</span></a></div></div><div class="field is-grouped is-grouped-multiline"><a class="tags has-addons" href="/tags/"><span class="tag">查看全部&gt;&gt;</span></a></div></div></div></div><div class="card widget" data-type="subscribe-email"><div class="card-content"><div class="menu"><h3 class="menu-label">订阅更新</h3><form action="https://feedburner.google.com/fb/a/mailverify" method="post" target="popupwindow" onsubmit="window.open(&#039;https://feedburner.google.com/fb/a/mailverify?uri=&#039;,&#039;popupwindow&#039;,&#039;scrollbars=yes,width=550,height=520&#039;);return true"><input type="hidden" value="" name="uri"><input type="hidden" name="loc" value="en_US"><div class="field has-addons"><div class="control has-icons-left is-expanded"><input class="input" name="email" type="email" placeholder="Email"><span class="icon is-small is-left"><i class="fas fa-envelope"></i></span></div><div class="control"><input class="button" type="submit" value="订阅"></div></div></form></div></div></div><div class="column-right-shadow is-hidden-widescreen"></div></div></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/"><img src="http://cdn.leheavengame.com/jue/images/bcd357f0-a4c2-11eb-ac26-0f6ed95d4e69.png" alt="胡金斌的个人网站" height="28"></a><p class="size-small"><span>&copy; 2026 hujinbin</span>  <br><span>© <a href="https://beian.miit.gov.cn/" rel="nofollow noopener noreferrer" target="_blank">浙ICP备17021862号-1</a><br></span><span>© 版权说明：[本网站所有内容均收集于互联网或自己创作,<br />&nbsp;&nbsp;&nbsp;&nbsp;方便于网友与自己学习交流，如有侵权，请<a href="/message" target="_blank">留言</a>，立即处理]<br /></span><span><span id="statistic-times">loading...</span><script>function createTime(time) {
+            var n = new Date(time);
+            now.setTime(now.getTime() + 250),
+                days = (now - n) / 1e3 / 60 / 60 / 24,
+                dnum = Math.floor(days),
+                hours = (now - n) / 1e3 / 60 / 60 - 24 * dnum,
+                hnum = Math.floor(hours),
+            1 == String(hnum).length && (hnum = "0" + hnum),
+                minutes = (now - n) / 1e3 / 60 - 1440 * dnum - 60 * hnum,
+                mnum = Math.floor(minutes),
+            1 == String(mnum).length && (mnum = "0" + mnum),
+                seconds = (now - n) / 1e3 - 86400 * dnum - 3600 * hnum - 60 * mnum,
+                snum = Math.round(seconds),
+            1 == String(snum).length && (snum = "0" + snum),
+                document.getElementById("statistic-times").innerHTML = "❤️本站自 <strong>"+time.split(" ")[0].replace(/\//g,".")+"</strong> 已运行 <strong>" + dnum + "</strong> 天 <strong>" + hnum + "</strong> 小时 <strong>" + mnum + "</strong> 分 <strong>" + snum + "</strong> 秒！❤️";
+        }var now = new Date();setInterval("createTime('2017/05/25 00:00:00')", 250,"");</script><br></span><div class="size-small"><span>❤️感谢 <strong><span id="busuanzi_value_site_uv">99+</span></strong> 小伙伴的 <strong><span id="busuanzi_value_site_pv">99+</span></strong> 次光临！❤️</span></div></p></div><div class="level-end"><div class="sideMusic"><link rel="stylesheet" href="/css/APlayer.min.css"><script src="/js/APlayer.min.js"></script><script src="/js/Meting.min.js"></script><meting-js style="width: auto;height: 2000px;" server="netease" type="playlist" id="2364053447" theme="#2980b9" loop="all" autoplay="false" order="list" storageName="aplayer-setting" lrctype="0" list-max-height="400px" fixed="true"></meting-js></div></div></div></div><script>
+            var bp = document.createElement('script');
+            var curProtocol = window.location.protocol.split(':')[0];
+            if (curProtocol === 'https') {
+                bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+            }
+            else {
+                bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+            }
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(bp, s);
+        </script></footer><script src="/js/vendor/moment-with-locales-2.22.2.min.js"></script><script src="/js/vendor/clipboard-2.0.4.min.js" defer></script><script>moment.locale("zh-CN");</script><script>var IcarusThemeSettings = {
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="/js/column.js"></script><script src="/js/animation.js"></script><a id="back-to-top" title="回到顶端" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back_to_top.js" defer></script><!--!--><!--!--><!--!--><script src="https://cdnjs.loli.net/ajax/libs/lightgallery/1.6.8/js/lightgallery.min.js" defer></script><script src="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.7.0/js/jquery.justifiedGallery.min.js" defer></script><script>window.addEventListener("load", () => {
+            if (typeof $.fn.lightGallery === 'function') {
+                $('.article').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof $.fn.justifiedGallery === 'function') {
+                if ($('.justified-gallery > p > .gallery-item').length) {
+                    $('.justified-gallery > p > .gallery-item').unwrap();
+                }
+                $('.justified-gallery').justifiedGallery();
+            }
+        });</script><!--!--><!--!--><!--!--><script src="/js/main.js" defer></script><script>$.getScript('/js/comment-issue-data.js',function(){loadIssueData('805d0c127d7edb5532bb','89de913bcdc87f3e47e916e5516f21ae8f0a69dd','hujinbin','myBlog',false);})</script><div class="searchbox"><div class="searchbox-container"><div class="searchbox-header"><div class="searchbox-input-container"><input class="searchbox-input" type="text" placeholder="想要查找什么..."></div><a class="searchbox-close" href="javascript:;">×</a></div><div class="searchbox-body"></div></div></div><script src="/js/insight.js" defer></script><script>document.addEventListener('DOMContentLoaded', function () {
+            loadInsight({"contentUrl":"/content.json"}, {"hint":"想要查找什么...","untitled":"(无标题)","posts":"文章","pages":"页面","categories":"分类","tags":"标签"});
+        });</script><script src="/js/pjax.js"></script><script type="text/javascript">var pjax = new Pjax({
+            elements: "a",//代表点击链接就更新
+            selectors: [  //代表要更新的节点
+                "body > .section", // 只替换页面主区域，不匹配文章中的同名区块
+                "body > .navbar-main .navbar-start", // 同步当前菜单高亮，保留搜索和主题切换按钮。
+                "title"
+            ],
+            cache: true,
+            cacheBust:false,
+            timeout: 8000
+        })
+
+        function loadBusuanzi(){
+        $.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js", function () {});
+        }
+
+        // 开始 PJAX 执行的函数
+        document.addEventListener('pjax:send', function () {
+        });
+        
+        // PJAX 完成之后执行的函数，可以和上面的重载放在一起
+        document.addEventListener('pjax:complete', function () {
+            $("body > .section").css({opacity:1});
+            if(false){
+                try{
+                    $.getScript('/js/comment-issue-data.js',function(){loadIssueData('805d0c127d7edb5532bb','89de913bcdc87f3e47e916e5516f21ae8f0a69dd','hujinbin','myBlog',false);});
+                }catch(e){}
+             }
+            if(false){
+                loadMathJax();
+            }
+            loadMainJs(jQuery, window.moment, window.ClipboardJS, window.IcarusThemeSettings);
+            loadBackTop();
+            loadBusuanzi();
+            if(typeof loadBanner == 'function'){
+                loadBanner();
+            }
+        });</script></body></html>
