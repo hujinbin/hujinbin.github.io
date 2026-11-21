@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><script id="blog-adsense-loader" data-cfasync="false" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7979174285252748" crossorigin="anonymous"></script><script data-cfasync="false">
+                document.getElementById('blog-adsense-loader').addEventListener('error', function () {
+                    window.__blogAdsenseLoaderFailed = true;
+                    document.dispatchEvent(new Event('adsense:loader-error'));
+                });
+            </script><script data-cfasync="false" defer src="/js/adsense.js?v=1"></script><script>
+                if (window.location.protocol === 'https:') {
+                    var policy = document.createElement('meta');
+                    policy.httpEquiv = 'Content-Security-Policy';
+                    policy.content = 'upgrade-insecure-requests';
+                    document.head.appendChild(policy);
+                }
+            </script><meta><title>数据标注实战：用 Open Marker 跑通从原始文本到审核交付的完整流程 - 胡金斌的个人网站</title><link rel="manifest" href="/manifest.json"><meta name="application-name" content="胡金斌的个人网站"><meta name="msapplication-TileImage" content="https://cdn.jsdelivr.net/gh/removeif/removeif-demo@latest/img/favicon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="胡金斌的个人网站"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="description" content="结合 Open Marker 的本地实践，从前后端启动开始，跑通文本导入、标注保存、审核与导出，并介绍图片和实体标注及异常恢复。"><meta property="og:type" content="blog"><meta property="og:title" content="胡金斌"><meta property="og:url" content="https://github.com/hujinbin"><meta property="og:site_name" content="胡金斌"><meta property="og:description" content="结合 Open Marker 的本地实践，从前后端启动开始，跑通文本导入、标注保存、审核与导出，并介绍图片和实体标注及异常恢复。"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg"><meta property="article:published_time" content="2026-11-10T12:19:06.000Z"><meta property="article:modified_time" content="2026-11-21T08:17:51.910Z"><meta property="article:author" content="hujinbin"><meta property="article:tag" content="数据标注"><meta property="article:tag" content="Open Marker"><meta property="article:tag" content="React"><meta property="article:tag" content="Vite"><meta property="article:tag" content="MongoDB"><meta property="article:tag" content="全栈开发"><meta property="twitter:card" content="summary"><meta property="twitter:image" content="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://hjb.leheavengame.com/2026/11/10/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%AE%9E%E6%88%98%EF%BC%9A%E7%94%A8-Open-Marker-%E8%B7%91%E9%80%9A%E4%BB%8E%E5%8E%9F%E5%A7%8B%E6%96%87%E6%9C%AC%E5%88%B0%E5%AE%A1%E6%A0%B8%E4%BA%A4%E4%BB%98%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B/"},"headline":"胡金斌的个人网站","image":["https://hjb.leheavengame.com/img/og_image.png"],"datePublished":"2026-11-10T12:19:06.000Z","dateModified":"2026-11-21T08:17:51.910Z","author":{"@type":"Person","name":"hujinbin"},"description":"结合 Open Marker 的本地实践，从前后端启动开始，跑通文本导入、标注保存、审核与导出，并介绍图片和实体标注及异常恢复。"}</script><link rel="canonical" href="https://hjb.leheavengame.com/2026/11/10/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%AE%9E%E6%88%98%EF%BC%9A%E7%94%A8-Open-Marker-%E8%B7%91%E9%80%9A%E4%BB%8E%E5%8E%9F%E5%A7%8B%E6%96%87%E6%9C%AC%E5%88%B0%E5%AE%A1%E6%A0%B8%E4%BA%A4%E4%BB%98%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B/"><link rel="icon" href="https://cdn.jsdelivr.net/gh/removeif/removeif-demo@latest/img/favicon.png"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/5.12.0/css/all.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/highlight.js/9.12.0/styles/atom-one-light.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css2?family=Ubuntu:wght@400;600&amp;family=Source+Code+Pro"><link rel="stylesheet" href="/css/default.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/5.12.0/css/all.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css?family=Ubuntu:400,600|Source+Code+Pro|Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Microsoft YaHei:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&amp;amp;subset=latin,latin-ext|Inconsolata|Itim|Lobster.css"><script src="/js/vendor/jquery-3.3.1.min.js"></script><script src="/js/globalUtils.js"></script><style>body>.footer,body>.navbar,body>.section{opacity:0}</style><!--!--><script>var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            hm.src = "//hm.baidu.com/hm.js?5676cd260145578c2f389fb76f4c82be";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();</script><script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" defer></script><!--!--><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.7.0/css/justifiedGallery.min.css"><!--!--><!--!--><script src="/js/vendor/pace-1.0.2.min.js"></script><link rel="stylesheet" href="/live2d/waifu.css"><script type="text/javascript" async src="/live2d/autoload.js"></script><script>
+        if(window.location.origin === 'http://hjb.leheavengame.com'){
+            window.location.replace("https://hjb.leheavengame.com"+window.location.pathname)
+        }
+        </script><meta name="generator" content="Hexo 5.3.0"></head><body class="is-3-column has-navbar-fixed-top"><nav class="navbar navbar-main is-fixed-top"><div class="container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/"><img src="http://cdn.leheavengame.com/jue/images/bcd357f0-a4c2-11eb-ac26-0f6ed95d4e69.png" alt="胡金斌的个人网站" height="28"></a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">首页</a><a class="navbar-item" href="/archives">归档</a><a class="navbar-item" href="/tags">标签</a><a class="navbar-item" href="/media">影音</a><a class="navbar-item" href="/album">相册</a><a class="navbar-item" href="/friend">友链</a><a class="navbar-item" href="/self-talking">碎碎念</a><a class="navbar-item" href="/message">留言</a><a class="navbar-item" href="/about">关于</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/hujinbin"><i class="fab fa-github"></i></a><a class="navbar-item search" title="搜索" href="javascript:;"><i class="fas fa-search"></i></a><a class="navbar-item" id="night-nav" title="Night Mode" href="javascript:;"><i class="fas fa-moon" id="night-icon"></i></a></div></div></div></nav><script type="text/javascript" src="/js/theme-setting.js"></script><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-9-widescreen"><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><div class="card"><article class="card-content article" role="article"><div class="article-meta size-small is-uppercase level is-mobile"><div class="level-left"><i class="far fa-calendar-plus"> </i>2026-11-10  <a class="commentCountImg" href="/2026/11/10/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%AE%9E%E6%88%98%EF%BC%9A%E7%94%A8-Open-Marker-%E8%B7%91%E9%80%9A%E4%BB%8E%E5%8E%9F%E5%A7%8B%E6%96%87%E6%9C%AC%E5%88%B0%E5%AE%A1%E6%A0%B8%E4%BA%A4%E4%BB%98%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B/#comment-container"><span class="display-none-class">6ab4488082f0944a88df8d7e78857cbc</span><i class="far fa-comment-dots"></i> <span class="commentCount" id="6ab4488082f0944a88df8d7e78857cbc">99+</span>  </a><span class="level-item"><i class="far fa-clock"> </i>34 分钟  <i class="fas fa-pencil-alt"> </i>5.1 k</span><span class="level-item" id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv">0</span>次访问</span></div></div><h1 class="title is-3 is-size-4-mobile">数据标注实战：用 Open Marker 跑通从原始文本到审核交付的完整流程</h1><div class="content"><p>上一篇讨论了 <a href="/2026/09/20/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F%E4%BB%8E%E4%B8%80%E6%9D%A1%E6%A0%87%E7%AD%BE%E7%90%86%E8%A7%A3%E6%A8%A1%E5%9E%8B%E5%A6%82%E4%BD%95%E5%AD%A6%E4%B9%A0/" title="数据标注的原理与价值">数据标注的原理与价值</a>。这一篇不再停留在概念上，而是结合 Open Marker，走一遍从项目搭建到标注结果交付的实际流程。</p>
+<p>一个标注系统是否可用，不能只看有没有项目列表和几个按钮。至少要回答：空项目能不能正常进入？数据能不能导入？标注保存后能不能回读？审核状态是否生效？导出文件里是不是只有应该交付的数据？</p>
+<p>本文以 2026 年 11 月 19 日的本地实现与验收为基线，不代表公网已经部署相同版本。</p>
+<a id="more"></a>
+
+<h2 id="一、先说清楚这次要做什么"><a href="#一、先说清楚这次要做什么" class="headerlink" title="一、先说清楚这次要做什么"></a>一、先说清楚这次要做什么</h2><p>这次使用的技术结构是 React 19 + Vite 8 前端，配套 Node.js/Koa 后端与 MongoDB。前后端分别维护，登录和注册复用现有账号服务，标注业务作为独立模块接入。</p>
+<p>当前可以完成三类任务：</p>
+<ul>
+<li>文本多标签分类，例如用户反馈归类。</li>
+<li>图片矩形框标注，例如目标检测数据制作。</li>
+<li>文本实体标注，例如标出人名和地点。</li>
+</ul>
+<p>它还包括数据导入、任务分配、自动保存、审核返工、抽检、审计记录和标准格式导出。</p>
+<p>这里先划清边界：<strong>标注平台负责生产和交付数据，不负责自动训练模型。</strong> 当前也没有实现视频、音频、3D、像素级分割或完整训练流水线。AI 部分只有接口适配，尚未接入真实模型。</p>
+<p>另外，前端工程不包含完整后端。下面的启动步骤面向已经拿到配套后端服务的项目环境；只有前端源码或一个 Vite 模板，并不能独立运行本文全部业务。</p>
+<h2 id="二、从脚手架开始，而不是从空文件夹开始"><a href="#二、从脚手架开始，而不是从空文件夹开始" class="headerlink" title="二、从脚手架开始，而不是从空文件夹开始"></a>二、从脚手架开始，而不是从空文件夹开始</h2><p>如果是新建一个学习工程，可以先用官方脚手架准备 React 模板：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">npm create vite@latest open-marker-lab -- --template react</span><br><span class="line"><span class="built_in">cd</span> open-marker-lab</span><br><span class="line">npm install</span><br><span class="line">npm run dev</span><br></pre></td></tr></table></figure>
+<p>这是“另起一个学习目录”的示例，不要在已有 Open Marker 目录中重新初始化。它只会生成基础模板，不会自动生成标注业务。命令形式和 React 模板可参考 <a target="_blank" rel="noopener" href="https://vite.dev/guide/">Vite 官方指南</a>。</p>
+<p>如果使用的是已经实现业务的项目，则进入现有前端仓库根目录，执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm ci</span><br></pre></td></tr></table></figure>
+<p>现有项目应以锁文件恢复依赖，而不是在实战过程中顺手把全部依赖升级到最新版本。本文本地验证使用 Node.js 24；选择其他版本前，要确认满足项目和 Vite 的要求。</p>
+<p>脚手架解决的是开发服务器、模块构建和基础工程组织。真正的业务，需要继续拆成可以独立理解的部分。目前前端主要模块如下，路径均相对仓库根目录：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">src/</span><br><span class="line">├── App.jsx              项目、数据集、任务与审核页面</span><br><span class="line">├── Auth.jsx             登录、注册及本地体验入口</span><br><span class="line">├── Editor.jsx           标注编辑、保存与草稿管理</span><br><span class="line">├── ImageCanvas.jsx      图片绘框与画布交互</span><br><span class="line">├── TextEntities.jsx     文本实体选区</span><br><span class="line">├── ExportPanel.jsx      导出快照与下载</span><br><span class="line">├── annotationData.js    项目和样本响应校验</span><br><span class="line">└── ErrorBoundary.jsx    渲染异常兜底</span><br></pre></td></tr></table></figure>
+<p>这并不是说每个功能必须对应一个文件，而是应避免让“画框”“导出”“权限”“保存状态”都挤进同一段逻辑里。</p>
+<h2 id="三、前后端分别负责什么"><a href="#三、前后端分别负责什么" class="headerlink" title="三、前后端分别负责什么"></a>三、前后端分别负责什么</h2><p>前端负责把工作过程呈现出来：展示数据、接受选择、编辑标注、提醒保存状态。后端负责验证这次操作是否允许，以及怎样可靠地保存结果。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">React 工作台</span><br><span class="line">    → /api 请求</span><br><span class="line">    → 后端身份验证、项目权限、输入校验</span><br><span class="line">        ├── MongoDB：项目、数据集、样本、记录与任务元数据</span><br><span class="line">        └── 受控文件目录：托管图片、导出文件</span><br></pre></td></tr></table></figure>
+<p>例如，“隐藏审核按钮”只是界面行为；标注员直接调用审核接口时，后端仍要检查角色。类似地，前端对图片格式的提示，也不能替代服务端校验。</p>
+<h3 id="为什么项目和样本要分开"><a href="#为什么项目和样本要分开" class="headerlink" title="为什么项目和样本要分开"></a>为什么项目和样本要分开</h3><p>当前项目详情提供名称、标签、成员、统计等信息，样本则通过分页接口单独读取：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">GET /api/annotation/projects/:id</span><br><span class="line">GET /api/annotation/projects/:id/samples?page=1</span><br></pre></td></tr></table></figure>
+<p>这样，打开一个项目不必把全部样本都拉进浏览器。保存一条标注，也不需要重新提交整个项目。</p>
+<p>样本有独立的 <code>revision</code>。保存时带上自己读取的版本，后端用样本标识与版本共同匹配更新：如果别人已经修改过同一条数据，就返回冲突，提示用户重新核对，而不是静默覆盖。不同样本之间则不必因为共享一个项目版本而相互冲突。</p>
+<h2 id="四、在本地启动配套服务"><a href="#四、在本地启动配套服务" class="headerlink" title="四、在本地启动配套服务"></a>四、在本地启动配套服务</h2><p>本地体验采用独立演示数据库，只监听回环地址，不连接业务数据库，也不连接真实模型。前提是本机 MongoDB 已按演示要求运行；不要为了体验而关闭现有业务数据库的认证。</p>
+<p>以下命令分别在对应仓库根目录执行，不需要把前端放进后端仓库。</p>
+<h3 id="1-启动配套后端"><a href="#1-启动配套后端" class="headerlink" title="1. 启动配套后端"></a>1. 启动配套后端</h3><p>在提供了演示启动脚本的后端工程中执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">npm ci --legacy-peer-deps</span><br><span class="line">npm run annotation:demo</span><br></pre></td></tr></table></figure>
+<p>这里的 <code>--legacy-peer-deps</code> 是该配套工程的依赖安装方式，不是所有 Node.js 项目都应照搬的默认参数。</p>
+<p>后端演示服务监听 <code>127.0.0.1:3110</code>。首次启动准备示例账号和合成项目；后续启动保留已有数据，不重置用户修改。</p>
+<h3 id="2-启动前端体验环境"><a href="#2-启动前端体验环境" class="headerlink" title="2. 启动前端体验环境"></a>2. 启动前端体验环境</h3><p>在现有前端工程中执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">npm ci</span><br><span class="line">npm run demo</span><br></pre></td></tr></table></figure>
+<p>打开 <a target="_blank" rel="noopener" href="http://127.0.0.1:5175/">本地体验入口</a>，可以一键进入，也可以用普通登录表单登录：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">负责人账号：13900001234</span><br><span class="line">密码：MarkerDemo123!</span><br></pre></td></tr></table></figure>
+<p>另有标注员 <code>13900001235</code> 和审核员 <code>13900001236</code>，演示密码相同。这些是专用的本地演示账号，不是公网通用账号。不要把演示服务开放到公网，也不要往其中上传敏感数据。</p>
+<h3 id="3-再验证生产构建"><a href="#3-再验证生产构建" class="headerlink" title="3. 再验证生产构建"></a>3. 再验证生产构建</h3><p>开发模式能运行，不等于构建产物也没有问题。保留演示后端，在前端目录执行以下 PowerShell 命令：</p>
+<figure class="highlight powershell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">npm run build</span><br><span class="line"><span class="variable">$env:API_PROXY_TARGET</span> = <span class="string">&#x27;http://127.0.0.1:3110&#x27;</span></span><br><span class="line">npm run preview -- -<span class="literal">-host</span> <span class="number">127.0</span>.<span class="number">0.1</span> -<span class="literal">-port</span> <span class="number">5190</span> -<span class="literal">-strictPort</span></span><br></pre></td></tr></table></figure>
+<p>打开 <a target="_blank" rel="noopener" href="http://127.0.0.1:5190/">本地构建预览</a>，使用上面的账号手动登录。生产构建不会包含一键体验入口和演示账号信息。</p>
+<p><code>preview</code> 这里只用于本地验收，不应当作公网生产服务器。真正发布时，还要处理静态资源、API 代理、持久化存储、访问控制与备份。</p>
+<h2 id="五、实战：做一个用户反馈分类项目"><a href="#五、实战：做一个用户反馈分类项目" class="headerlink" title="五、实战：做一个用户反馈分类项目"></a>五、实战：做一个用户反馈分类项目</h2><p>先用很少的数据验证流程，不急着导入几万条。下面的样例用于功能验收，不能据此训练出可靠的情感模型。</p>
+<h3 id="第一步：创建项目，先写标注规则"><a href="#第一步：创建项目，先写标注规则" class="headerlink" title="第一步：创建项目，先写标注规则"></a>第一步：创建项目，先写标注规则</h3><p>点击“新建项目”，填写：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">项目名称：用户反馈分类实战</span><br><span class="line">项目类型：文本分类</span><br><span class="line">标签集：正向,负向</span><br></pre></td></tr></table></figure>
+<p>在“项目设置”中补充标注规范。例如，本练习只处理有明确态度的简单评论：表达满意的标为正向，表达不满的标为负向；遇到混合或无法判断的内容，不强行提交，先由负责人明确规则。</p>
+<p>当前文本编辑器支持多标签。<strong>“本练习每条只选一个标签”是这次练习的规范，不是平台已经实现了单选约束。</strong> 如果实际业务要求严格单选，需要另外补充对应的前后端规则。</p>
+<p>项目创建后默认进入数据集页面。切换到“标注任务”，此时应该保留导航并显示“项目还没有数据”和“前往导入数据”。数据为空是一种正常业务状态，不应该导致整页空白。</p>
+<h3 id="第二步：导入两条文本"><a href="#第二步：导入两条文本" class="headerlink" title="第二步：导入两条文本"></a>第二步：导入两条文本</h3><p>点击“前往导入数据”，再点“导入数据”。数据集名称填写“实战数据”，文本格式选择 TXT，粘贴：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">这款产品很好用。</span><br><span class="line">上传一直失败，体验不好。</span><br></pre></td></tr></table></figure>
+<p>当前导入规则是一行一条数据。若使用 JSONL，等价输入如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&#123;&quot;content&quot;:&quot;这款产品很好用。&quot;&#125;</span><br><span class="line">&#123;&quot;content&quot;:&quot;上传一直失败，体验不好。&quot;&#125;</span><br></pre></td></tr></table></figure>
+<p>确认导入前检查预览中的可导入数量、重复记录和错误行。当前每批最多 500 条，这不是整个项目只能存 500 条。导入去重也不等于识别所有语义近似句子；近重复数据仍需要额外检查。</p>
+<p>导入成功后切换到“标注任务”，应该能看到两条待标注数据。</p>
+<h3 id="第三步：标注第一条，并验证保存"><a href="#第三步：标注第一条，并验证保存" class="headerlink" title="第三步：标注第一条，并验证保存"></a>第三步：标注第一条，并验证保存</h3><p>选择“这款产品很好用。”，勾选“正向”。可以等待自动保存，也可以点击“保存草稿”。</p>
+<p>不要只看按钮有没有响应，至少检查三件事：</p>
+<ol>
+<li>页面状态是否从“未保存”变成“已保存”。</li>
+<li>刷新页面、重新打开同一条数据后，标签是否仍然存在。</li>
+<li>保存失败时，是否保留当前修改，并提供重试或草稿备份入口。</li>
+</ol>
+<p>本项目支持会话草稿恢复，但它不是无限期、跨浏览器的备份。重要数据仍应以服务端确认保存为准。</p>
+<p>完成核对后点击“提交审核”。此时样本进入待审核状态，标注内容转为只读；审核驳回后可以继续修改。</p>
+<h3 id="第四步：审核通过，保留一条未审核数据作对照"><a href="#第四步：审核通过，保留一条未审核数据作对照" class="headerlink" title="第四步：审核通过，保留一条未审核数据作对照"></a>第四步：审核通过，保留一条未审核数据作对照</h3><p>进入“审核质检”，选择第一条数据并点击“审核通过”。第二条暂时不处理，用它验证导出是否正确过滤未完成的数据。</p>
+<p>快速体验时，负责人默认可以审核自己的结果。这只是为了方便单人跑通流程，不意味着真实团队应该省略独立审核。</p>
+<p>若要体验多人协作，可在“项目成员”中添加已注册的标注员和审核员，再把任务分配给标注员。在项目设置开启“禁止标注者审核自己的结果”后，应由另一位有审核权限的成员审核。</p>
+<p>这里还有一个权限边界：标注员只能修改分配给自己的任务，但当前项目成员可以查看项目数据。任务分配并不是数据可见性隔离；对敏感数据有更细要求时，需要继续设计权限。</p>
+<h3 id="第五步：生成快照，检查真正下载到的文件"><a href="#第五步：生成快照，检查真正下载到的文件" class="headerlink" title="第五步：生成快照，检查真正下载到的文件"></a>第五步：生成快照，检查真正下载到的文件</h3><p>进入“数据导出”，选择 JSONL，点击“生成导出快照”，再点击“下载快照”。</p>
+<p>此时应只导出第一条已通过的数据，不应包含第二条未审核数据。实际文件还包含样本标识、标签定义和版本等字段。下面只展示其中的核心字段，不是完整格式模板：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;dataset&quot;</span>: <span class="string">&quot;实战数据&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;content&quot;</span>: <span class="string">&quot;这款产品很好用。&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;text&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;annotation&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;labels&quot;</span>: [<span class="string">&quot;正向&quot;</span>]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>还要注意，导出行中的顶层 <code>labels</code> 是项目标签定义，真正属于该条样本的标签在 <code>annotation.labels</code> 中。编写后续训练转换脚本时，不要把二者混为一谈。</p>
+<p>快照用于重复下载同一份交付结果，不等于可以回滚整个数据集。也不要直接把平台导出文件当成所有模型都能使用的训练输入：不同训练程序还需要各自的字段转换、数据划分和校验。</p>
+<p>到这里，完成的是一条真实的标注交付流程，而不是一次模型训练实验。</p>
+<h2 id="六、把同一套流程扩展到图片和实体标注"><a href="#六、把同一套流程扩展到图片和实体标注" class="headerlink" title="六、把同一套流程扩展到图片和实体标注"></a>六、把同一套流程扩展到图片和实体标注</h2><h3 id="图片：不仅要有类别，还要有位置"><a href="#图片：不仅要有类别，还要有位置" class="headerlink" title="图片：不仅要有类别，还要有位置"></a>图片：不仅要有类别，还要有位置</h3><p>创建图片项目后，可以上传 PNG/JPEG，再绘制矩形框、选择类别、调整位置与大小，最后走提交和审核流程。当前单张图片上限为 5 MB，并校验图片尺寸。</p>
+<p>内部框坐标采用相对图片宽高的比例。假设一张图片宽 1000、高 500，目标框左上角是 <code>(100, 50)</code>，框宽 200、高 100，则内部表示为：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="attr">&quot;label&quot;</span>:<span class="string">&quot;车辆&quot;</span>,<span class="attr">&quot;x&quot;</span>:<span class="number">0.1</span>,<span class="attr">&quot;y&quot;</span>:<span class="number">0.1</span>,<span class="attr">&quot;width&quot;</span>:<span class="number">0.2</span>,<span class="attr">&quot;height&quot;</span>:<span class="number">0.2</span>&#125;</span><br></pre></td></tr></table></figure>
+<p>导出时，COCO 使用像素框 <code>[100, 50, 200, 100]</code>；YOLO 使用归一化中心点与宽高 <code>(0.2, 0.2, 0.2, 0.2)</code>，并配上类别编号。这也是为什么必须保存原图尺寸，而不能拿浏览器里缩放后的显示尺寸当作依据。</p>
+<p>当前实现会在 COCO/YOLO 的 ZIP 中打包托管原图；外链图片不会由服务端自动抓取，需要按导出清单自行准备。即使生成了 ZIP，训练前仍要自行检查图片是否齐全、类别映射是否正确，并完成合理的数据划分。</p>
+<h3 id="实体：不仅要有类别，还要有文本范围"><a href="#实体：不仅要有类别，还要有文本范围" class="headerlink" title="实体：不仅要有类别，还要有文本范围"></a>实体：不仅要有类别，还要有文本范围</h3><p>创建实体标注项目，标签设为“人物、地点”。对于“张三在北京工作。”，可以标记：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;entities&quot;</span>: [</span><br><span class="line">    &#123;<span class="attr">&quot;start&quot;</span>:<span class="number">0</span>,<span class="attr">&quot;end&quot;</span>:<span class="number">2</span>,<span class="attr">&quot;text&quot;</span>:<span class="string">&quot;张三&quot;</span>,<span class="attr">&quot;label&quot;</span>:<span class="string">&quot;人物&quot;</span>&#125;,</span><br><span class="line">    &#123;<span class="attr">&quot;start&quot;</span>:<span class="number">3</span>,<span class="attr">&quot;end&quot;</span>:<span class="number">5</span>,<span class="attr">&quot;text&quot;</span>:<span class="string">&quot;北京&quot;</span>,<span class="attr">&quot;label&quot;</span>:<span class="string">&quot;地点&quot;</span>&#125;</span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">&quot;empty&quot;</span>: <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>这里采用左闭右开的区间：<code>start</code> 包含，<code>end</code> 不包含。当前项目按 JavaScript 的 UTF-16 下标记录，遇到 emoji 时，不一定能把一个视觉字符当作一个下标单位。导入其他语言的训练程序时，要确认它期待的是 UTF-16 偏移、Unicode 码点位置，还是分词后的 token 位置。</p>
+<p>当前实体标注不支持重叠或嵌套实体。需要“一个机构名里再标地点”这样的规则时，不能直接假设现有编辑器已经支持。</p>
+<h2 id="七、一次白屏问题带来的工程教训"><a href="#七、一次白屏问题带来的工程教训" class="headerlink" title="七、一次白屏问题带来的工程教训"></a>七、一次白屏问题带来的工程教训</h2><p>这个项目曾出现过一个很典型的问题：总览页能打开，一进入项目，整个页面却变成空白。</p>
+<p>最容易产生的误解是“没有数据，所以没显示东西”。实际原因不是业务上的空数据，而是旧前端仍在读取：</p>
+<figure class="highlight js"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">project.samples.find(<span class="function">(<span class="params">sample</span>) =&gt;</span> sample.id === selected)</span><br></pre></td></tr></table></figure>
+<p>新版后端已经把项目详情与样本列表拆开，详情里不再包含 <code>samples</code>。旧代码拿到项目对象后访问了不存在的数组，触发渲染异常。</p>
+<p>这个问题提醒我们，至少要同时解决三层问题。</p>
+<p><strong>第一层是配套部署。</strong> 新后端和旧静态页面不能因为“都能启动”就被视为兼容。发布后要确认实际加载的构建版本，并复验真实接口。</p>
+<p><strong>第二层是数据边界。</strong> 项目详情省略 <code>samples</code> 是合法协议，前端应从分页接口取数据；分页接口缺失必需的 <code>items</code>，却是异常。不能把所有错误都写成 <code>value || []</code>，否则“服务坏了”会被伪装成“项目没有数据”。当前的响应校验模块 <code>src/annotationData.js</code> 就是在进入页面状态前区分这两类情况。</p>
+<p><strong>第三层是渲染兜底。</strong> 局部组件出错时，尽量保留导航和恢复入口；根组件出错时，也应该有能重新打开工作区的页面。本项目通过错误边界组件 <code>src/ErrorBoundary.jsx</code> 处理这类失败。错误边界主要处理子组件的渲染错误，不能代替异步请求和事件处理中的异常捕获，具体边界见 <a target="_blank" rel="noopener" href="https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary">React 官方说明</a>。</p>
+<p>修复后，真正的空项目显示导入引导；任务请求失败显示重试；组件渲染失败显示恢复页。三种状态有不同的处理方式，不再统一变成一块空白。</p>
+<h2 id="八、怎样证明平台真的能用"><a href="#八、怎样证明平台真的能用" class="headerlink" title="八、怎样证明平台真的能用"></a>八、怎样证明平台真的能用</h2><p>“页面看起来正常”只是检查的一部分。对于标注平台，至少需要验证数据最终是否落到了正确的位置，并且经过了正确的流程。</p>
+<p>这次本地闭环验收检查了：</p>
+<table>
+<thead>
+<tr>
+<th>环节</th>
+<th>检查内容</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>空项目</td>
+<td>保留导航，显示暂无数据和导入入口</td>
+</tr>
+<tr>
+<td>导入</td>
+<td>数据真实写入，任务页能读取</td>
+</tr>
+<tr>
+<td>保存</td>
+<td>刷新后标注仍然存在</td>
+</tr>
+<tr>
+<td>并发</td>
+<td>旧版本保存被拒绝，当前草稿保留</td>
+</tr>
+<tr>
+<td>审核</td>
+<td>提交、通过、驳回对应的权限与状态生效</td>
+</tr>
+<tr>
+<td>导出</td>
+<td>只包含已通过样本，内容和标签正确</td>
+</tr>
+<tr>
+<td>重复下载</td>
+<td>同一快照的文件内容一致</td>
+</tr>
+<tr>
+<td>故障恢复</td>
+<td>异常数据、断网、过期登录和渲染错误不再直接白屏</td>
+</tr>
+</tbody></table>
+<p>在前端仓库可以先运行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">npm <span class="built_in">test</span></span><br><span class="line">npm run lint</span><br><span class="line">npm run build</span><br></pre></td></tr></table></figure>
+<p>浏览器验收使用 Python Playwright，包含文本闭环、图片、协作、实体和 AI 接口适配等测试。运行它们之前，还需要启动隔离测试后端并配置测试环境，具体命令见 <a target="_blank" rel="noopener" href="https://github.com/hujinbin/open-marker#readme">项目 README</a>。不要把测试脚本的地址改成真实业务环境来“顺便验收”。</p>
+<p>本次本地记录中，5 组前端单测、7 组浏览器测试及配套后端验证通过；随后又在生产构建预览中复验了文本闭环和异常响应恢复。这证明的是所覆盖的本地行为，不等于已经完成公网发布、容量压测或真实模型效果评估。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>搭建数据标注平台，最值得先完成的不是菜单数量，而是一条从原始数据到审核交付的可靠路径。</p>
+<p>Open Marker 的实践顺序是：用标准脚手架建立前端基础，接入现有账号体系，拆分项目与样本，逐步补上编辑、保存、审核和导出，再用真实数据读写和故障测试验证它们。</p>
+<p>平台跑通之后，下一阶段才是围绕具体业务完善标注规范、补充代表性样本、接入可信模型，并在独立评测中验证效果。数据标注系统负责把这些工作组织好，但不能替代对数据质量的判断。</p>
+</div><div class="article-licensing box"><div class="licensing-title"><p>数据标注实战：用 Open Marker 跑通从原始文本到审核交付的完整流程</p><p><a href="https://hjb.leheavengame.com/2026/11/10/数据标注实战：用-Open-Marker-跑通从原始文本到审核交付的完整流程/">https://hjb.leheavengame.com/2026/11/10/数据标注实战：用-Open-Marker-跑通从原始文本到审核交付的完整流程/</a></p></div><div class="licensing-meta level is-mobile"><div class="level-left"><div class="level-item is-narrow"><div><h6>作者</h6><a href="https://hjb.leheavengame.com"><p>hujinbin</p></a></div></div><div class="level-item is-narrow"><div><h6>发布于</h6><p>2026-11-10</p></div></div><div class="level-item is-narrow"><div><h6>更新于</h6><p>2026-11-21</p></div></div><div class="level-item is-narrow"><div><h6>许可协议</h6><p><a class="icon" rel="noopener" target="_blank" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a><a class="icon" rel="noopener" target="_blank" title="Attribution" href="https://creativecommons.org/licenses/by/4.0/"><i class="fab fa-creative-commons-by"></i></a><a class="icon" rel="noopener" target="_blank" title="Noncommercial" href="https://creativecommons.org/licenses/by-nc/4.0/"><i class="fab fa-creative-commons-nc"></i></a></p></div></div></div></div></div><div class="recommend-area"><div class="recommend-post"><span class="is-size-6 has-text-grey has-mr-7"># 相关文章</span><br><span>  1.<a class="is-size-6" href="/2026/11/18/DeepSeek-Harness-%E5%AE%9E%E6%88%98%EF%BC%9A%E5%81%9A%E4%B8%80%E4%B8%AA%E9%9D%A2%E5%90%91-Three-js-%E4%B8%8E-Python-%E7%9A%84-Agent-CLI/" target="_blank">DeepSeek Harness 实战：做一个面向 Three.js 与 Python 的 Agent CLI</a><br></span><span>  2.<a class="is-size-6" href="/2026/10/14/LangChain-%E4%B8%8E-LangGraph-%E9%A1%B9%E7%9B%AE%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E5%AF%B9%E8%AF%9D%E7%94%9F%E6%88%90%E5%88%B0%E5%8F%AF%E7%BC%96%E8%BE%91%E5%B7%A5%E4%BD%9C%E6%B5%81/" target="_blank">LangChain 与 LangGraph 项目实战：从对话生成到可编辑工作流</a><br></span><span>  3.<a class="is-size-6" href="/2026/10/02/DeepSeek-Harness-%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90%EF%BC%9A%E4%B8%80%E6%AC%A1%E4%BB%BB%E5%8A%A1%E5%A6%82%E4%BD%95%E4%BB%8E%E6%A8%A1%E5%9E%8B%E8%B5%B0%E5%88%B0%E5%B7%A5%E5%85%B7%E6%89%A7%E8%A1%8C/" target="_blank">DeepSeek Harness 原理解析：一次任务如何从模型走到工具执行</a><br></span><span>  4.<a class="is-size-6" href="/2026/09/20/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F%E4%BB%8E%E4%B8%80%E6%9D%A1%E6%A0%87%E7%AD%BE%E7%90%86%E8%A7%A3%E6%A8%A1%E5%9E%8B%E5%A6%82%E4%BD%95%E5%AD%A6%E4%B9%A0/" target="_blank">数据标注到底在做什么？从一条标签理解模型如何学习</a><br></span><span>  5.<a class="is-size-6" href="/2026/07/24/LangChain-%E5%92%8C-LangGraph-%E7%9A%84%E5%8C%BA%E5%88%AB%EF%BC%8C%E7%BB%93%E5%90%88%E5%8F%AF%E8%A7%86%E5%8C%96%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%90%86%E8%A7%A3%E9%80%89%E5%9E%8B/" target="_blank">LangChain 和 LangGraph 的区别，结合可视化工作流理解选型</a><br></span><span>  6.<a class="is-size-6" href="/2026/06/14/LangGraph-%E5%85%A5%E9%97%A8%EF%BC%9A%E7%94%A8%E7%8A%B6%E6%80%81%E3%80%81%E8%8A%82%E7%82%B9%E5%92%8C%E8%BF%9E%E7%BA%BF%E6%9E%84%E5%BB%BA%E5%B7%A5%E4%BD%9C%E6%B5%81/" target="_blank">LangGraph 入门：用状态、节点和连线构建工作流</a><br></span><span>  7.<a class="is-size-6" href="/2026/05/01/LangChain-%E5%85%A5%E9%97%A8%EF%BC%9A%E7%94%A8-JavaScript-%E7%BB%84%E7%BB%87%E6%A8%A1%E5%9E%8B%E8%B0%83%E7%94%A8%E4%B8%8E%E6%8F%90%E7%A4%BA%E6%A8%A1%E6%9D%BF/" target="_blank">LangChain 入门：用 JavaScript 组织模型调用与提示模板</a><br></span></div></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/social-share.js/1.0.16/css/share.min.css"><div class="social-share"></div><script src="https://cdnjs.loli.net/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script></article></div><div class="card"><div class="card-content"><h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3><div class="buttons is-centered"><a class="button donate" data-type="alipay"><span class="icon is-small"><i class="fab fa-alipay"></i></span><span>支付宝</span><span class="qrcode"><img src="https://img.alicdn.com/imgextra/i4/2509590220/TB2GxhZfjnD8KJjSspbXXbbEXXa_!!2509590220.jpg" alt="支付宝"></span></a><a class="button donate" data-type="wechat"><span class="icon is-small"><i class="fab fa-weixin"></i></span><span>微信</span><span class="qrcode"><img src="https://img.alicdn.com/imgextra/i1/2509590220/TB2K0hPfdnJ8KJjSszdXXaxuFXa_!!2509590220.png" alt="微信"></span></a></div></div></div><nav class="post-navigation mt-4 level is-mobile"><div class="level-start"><a class="article-nav-prev level level-item link-muted" href="/2026/11/18/DeepSeek-Harness-%E5%AE%9E%E6%88%98%EF%BC%9A%E5%81%9A%E4%B8%80%E4%B8%AA%E9%9D%A2%E5%90%91-Three-js-%E4%B8%8E-Python-%E7%9A%84-Agent-CLI/"><i class="level-item fas fa-chevron-left"></i><span class="level-item">DeepSeek Harness 实战：做一个面向 Three.js 与 Python 的 Agent CLI</span></a></div><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/2026/10/14/LangChain-%E4%B8%8E-LangGraph-%E9%A1%B9%E7%9B%AE%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E5%AF%B9%E8%AF%9D%E7%94%9F%E6%88%90%E5%88%B0%E5%8F%AF%E7%BC%96%E8%BE%91%E5%B7%A5%E4%BD%9C%E6%B5%81/"><span class="level-item">LangChain 与 LangGraph 项目实战：从对话生成到可编辑工作流</span><i class="level-item fas fa-chevron-right"></i></a></div></nav><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><div class="card"><div class="card-content"><div class="title is-5">评论</div><div id="comment-container"></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/gitalk/1.6.0/gitalk.css"><script> $.getScript('/js/gitalk.min.js', function () {
+            var cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
+            var gitalk = new Gitalk({
+            language:'zh-CN',
+            id: '6ab4488082f0944a88df8d7e78857cbc',
+            title: "数据标注实战：用 Open Marker 跑通从原始文本到审核交付的完整流程",
+            url: cleanUrl,
+            repo: 'myBlog',
+            owner: 'hujinbin',
+            clientID: '805d0c127d7edb5532bb',
+            clientSecret: '89de913bcdc87f3e47e916e5516f21ae8f0a69dd',
+            admin: ["hujinbin"],
+            createIssueManually: false,
+            distractionFreeMode: false,
+            perPage: 10,
+            pagerDirection: 'last',
+            labels: ["Gitalk"],
+            proxy: 'https://www.leheavengame.com/api/github/oauth/access_token',
+            
+            enableHotKey: true,
+            isLocked: false
+        })
+        gitalk.render('comment-container')});</script></div></div></div><div class="column column-left is-4-tablet is-4-desktop is-3-widescreen  order-1 is-sticky"><!--!--><div class="card widget" data-type="profile"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="avatar is-rounded" src="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg" alt="胡金斌"></figure><p class="title is-size-4 is-block" style="line-height:inherit;">胡金斌</p><p class="is-size-6 is-block">前端 / 全栈开发工程师</p><p class="is-size-6 is-flex justify-content-center"><i class="fas fa-map-marker-alt mr-1"></i><span>浙江杭州</span></p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">文章</p><a href="/archives"><p class="title">66</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">分类</p><a href="/categories"><p class="title">1</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">标签</p><a href="/tags"><p class="title">83</p></a></div></div></nav><div class="level"><a class="level-item button is-primary is-rounded" href="https://github.com/hujinbin" target="_blank" rel="noopener">关注我</a></div><div class="level is-mobile"><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="Github" href="https://github.com/hujinbin"><i class="fab fa-github"></i></a><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="Email" href="mailto:437044048@qq.com"><i class="fa fa-envelope"></i></a><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="RSS" href="/atom.xml"><i class="fas fa-rss"></i></a></div><div><hr><p id="hitokoto">:D 一言句子获取中...</p><script type="text/javascript" defer>function getYiyan(){
+                                $.getJSON("https://v1.hitokoto.cn/", function (data) {
+                                if(data){
+                                    $('#hitokoto').html("");
+                                    $('#hitokoto').append("<strong style='color: #3273dc;'>"+data.hitokoto+"</strong>"+
+                                    "<p>"+"来源《"+data.from+"》</p><p>提供者-"+data.creator+"</p>");
+                                }});}
+                                $(function (){getYiyan();$('#hitokoto').click(function(){getYiyan();})});</script></div></div></div><div class="card widget" data-type="links"><div class="card-content"><div class="menu"><h3 class="menu-label">链接</h3><ul class="menu-list"><li><a class="level is-mobile" href="https://cash.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惠shop好货</span></span><span class="level-right"><span class="level-item tag">cash.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://jue.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惊觉</span></span><span class="level-right"><span class="level-item tag">jue.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://bbs.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">乾学网</span></span><span class="level-right"><span class="level-item tag">bbs.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://guide.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">乾坤宝录</span></span><span class="level-right"><span class="level-item tag">guide.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://coupon.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惠shop</span></span><span class="level-right"><span class="level-item tag">coupon.leheavengame.com</span></span></a></li></ul></div></div></div><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><!--!--><div class="card widget"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-11-18T14:05:35.000Z">2026-11-18</time></p><p class="title"><a href="/2026/11/18/DeepSeek-Harness-%E5%AE%9E%E6%88%98%EF%BC%9A%E5%81%9A%E4%B8%80%E4%B8%AA%E9%9D%A2%E5%90%91-Three-js-%E4%B8%8E-Python-%E7%9A%84-Agent-CLI/">DeepSeek Harness 实战：做一个面向 Three.js 与 Python 的 Agent CLI</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-11-10T12:19:06.000Z">2026-11-10</time></p><p class="title"><a href="/2026/11/10/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%AE%9E%E6%88%98%EF%BC%9A%E7%94%A8-Open-Marker-%E8%B7%91%E9%80%9A%E4%BB%8E%E5%8E%9F%E5%A7%8B%E6%96%87%E6%9C%AC%E5%88%B0%E5%AE%A1%E6%A0%B8%E4%BA%A4%E4%BB%98%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B/">数据标注实战：用 Open Marker 跑通从原始文本到审核交付的完整流程</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-10-14T15:16:49.000Z">2026-10-14</time></p><p class="title"><a href="/2026/10/14/LangChain-%E4%B8%8E-LangGraph-%E9%A1%B9%E7%9B%AE%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E5%AF%B9%E8%AF%9D%E7%94%9F%E6%88%90%E5%88%B0%E5%8F%AF%E7%BC%96%E8%BE%91%E5%B7%A5%E4%BD%9C%E6%B5%81/">LangChain 与 LangGraph 项目实战：从对话生成到可编辑工作流</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-10-02T09:05:33.000Z">2026-10-02</time></p><p class="title"><a href="/2026/10/02/DeepSeek-Harness-%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90%EF%BC%9A%E4%B8%80%E6%AC%A1%E4%BB%BB%E5%8A%A1%E5%A6%82%E4%BD%95%E4%BB%8E%E6%A8%A1%E5%9E%8B%E8%B5%B0%E5%88%B0%E5%B7%A5%E5%85%B7%E6%89%A7%E8%A1%8C/">DeepSeek Harness 原理解析：一次任务如何从模型走到工具执行</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-09-20T03:19:04.000Z">2026-09-20</time></p><p class="title"><a href="/2026/09/20/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F%E4%BB%8E%E4%B8%80%E6%9D%A1%E6%A0%87%E7%AD%BE%E7%90%86%E8%A7%A3%E6%A8%A1%E5%9E%8B%E5%A6%82%E4%BD%95%E5%AD%A6%E4%B9%A0/">数据标注到底在做什么？从一条标签理解模型如何学习</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">分类</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/categories/AI-%E5%BC%80%E5%8F%91/"><span class="level-start"><span class="level-item">AI 开发</span></span><span class="level-end"><span class="level-item tag">8</span></span></a></li></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">归档</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/archives/2026/11/"><span class="level-start"><span class="level-item">十一月 2026</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/10/"><span class="level-start"><span class="level-item">十月 2026</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/09/"><span class="level-start"><span class="level-item">九月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/08/"><span class="level-start"><span class="level-item">八月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/07/"><span class="level-start"><span class="level-item">七月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><a class="level is-mobile is-marginless" href="/archives/"><span class="level-start"><span class="level-item">查看全部&gt;&gt;</span></span></a></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">标签</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/javascript/"><span class="tag">javascript</span><span class="tag is-grey-lightest">39</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Agent/"><span class="tag">AI Agent</span><span class="tag is-grey-lightest">6</span></a></div><div class="control"><a class="tags has-addons" href="/tags/node/"><span class="tag">node</span><span class="tag is-grey-lightest">6</span></a></div><div class="control"><a class="tags has-addons" href="/tags/Vue/"><span class="tag">Vue</span><span class="tag is-grey-lightest">5</span></a></div><div class="control"><a class="tags has-addons" href="/tags/LangChain/"><span class="tag">LangChain</span><span class="tag is-grey-lightest">4</span></a></div><div class="control"><a class="tags has-addons" href="/tags/TypeScript/"><span class="tag">TypeScript</span><span class="tag is-grey-lightest">4</span></a></div><div class="control"><a class="tags has-addons" href="/tags/JavaScript/"><span class="tag">JavaScript</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/LangGraph/"><span class="tag">LangGraph</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/css/"><span class="tag">css</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI/"><span class="tag">AI</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Tools/"><span class="tag">AI Tools</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/DeepSeek-Harness/"><span class="tag">DeepSeek Harness</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/MCP/"><span class="tag">MCP</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/Three-js/"><span class="tag">Three.js</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/http/"><span class="tag">http</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91/"><span class="tag">前端开发</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/"><span class="tag">工作流</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8/"><span class="tag">数据标注</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/3D%E5%8F%AF%E8%A7%86%E5%8C%96/"><span class="tag">3D可视化</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Skill/"><span class="tag">AI Skill</span><span class="tag is-grey-lightest">1</span></a></div></div><div class="field is-grouped is-grouped-multiline"><a class="tags has-addons" href="/tags/"><span class="tag">查看全部&gt;&gt;</span></a></div></div></div></div><div class="card widget" data-type="subscribe-email"><div class="card-content"><div class="menu"><h3 class="menu-label">订阅更新</h3><form action="https://feedburner.google.com/fb/a/mailverify" method="post" target="popupwindow" onsubmit="window.open(&#039;https://feedburner.google.com/fb/a/mailverify?uri=&#039;,&#039;popupwindow&#039;,&#039;scrollbars=yes,width=550,height=520&#039;);return true"><input type="hidden" value="" name="uri"><input type="hidden" name="loc" value="en_US"><div class="field has-addons"><div class="control has-icons-left is-expanded"><input class="input" name="email" type="email" placeholder="Email"><span class="icon is-small is-left"><i class="fas fa-envelope"></i></span></div><div class="control"><input class="button" type="submit" value="订阅"></div></div></form></div></div></div><div class="column-right-shadow is-hidden-widescreen"></div></div></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/"><img src="http://cdn.leheavengame.com/jue/images/bcd357f0-a4c2-11eb-ac26-0f6ed95d4e69.png" alt="胡金斌的个人网站" height="28"></a><p class="size-small"><span>&copy; 2026 hujinbin</span>  <br><span>© <a href="https://beian.miit.gov.cn/" rel="nofollow noopener noreferrer" target="_blank">浙ICP备17021862号-1</a><br></span><span>© 版权说明：[本网站所有内容均收集于互联网或自己创作,<br />&nbsp;&nbsp;&nbsp;&nbsp;方便于网友与自己学习交流，如有侵权，请<a href="/message" target="_blank">留言</a>，立即处理]<br /></span><span><span id="statistic-times">loading...</span><script>function createTime(time) {
+            var n = new Date(time);
+            now.setTime(now.getTime() + 250),
+                days = (now - n) / 1e3 / 60 / 60 / 24,
+                dnum = Math.floor(days),
+                hours = (now - n) / 1e3 / 60 / 60 - 24 * dnum,
+                hnum = Math.floor(hours),
+            1 == String(hnum).length && (hnum = "0" + hnum),
+                minutes = (now - n) / 1e3 / 60 - 1440 * dnum - 60 * hnum,
+                mnum = Math.floor(minutes),
+            1 == String(mnum).length && (mnum = "0" + mnum),
+                seconds = (now - n) / 1e3 - 86400 * dnum - 3600 * hnum - 60 * mnum,
+                snum = Math.round(seconds),
+            1 == String(snum).length && (snum = "0" + snum),
+                document.getElementById("statistic-times").innerHTML = "❤️本站自 <strong>"+time.split(" ")[0].replace(/\//g,".")+"</strong> 已运行 <strong>" + dnum + "</strong> 天 <strong>" + hnum + "</strong> 小时 <strong>" + mnum + "</strong> 分 <strong>" + snum + "</strong> 秒！❤️";
+        }var now = new Date();setInterval("createTime('2017/05/25 00:00:00')", 250,"");</script><br></span><div class="size-small"><span>❤️感谢 <strong><span id="busuanzi_value_site_uv">99+</span></strong> 小伙伴的 <strong><span id="busuanzi_value_site_pv">99+</span></strong> 次光临！❤️</span></div></p></div><div class="level-end"><div class="sideMusic"><link rel="stylesheet" href="/css/APlayer.min.css"><script src="/js/APlayer.min.js"></script><script src="/js/Meting.min.js"></script><meting-js style="width: auto;height: 2000px;" server="netease" type="playlist" id="2364053447" theme="#2980b9" loop="all" autoplay="false" order="list" storageName="aplayer-setting" lrctype="0" list-max-height="400px" fixed="true"></meting-js></div></div></div></div><script>
+            var bp = document.createElement('script');
+            var curProtocol = window.location.protocol.split(':')[0];
+            if (curProtocol === 'https') {
+                bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+            }
+            else {
+                bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+            }
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(bp, s);
+        </script></footer><script src="/js/vendor/moment-with-locales-2.22.2.min.js"></script><script src="/js/vendor/clipboard-2.0.4.min.js" defer></script><script>moment.locale("zh-CN");</script><script>var IcarusThemeSettings = {
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="/js/column.js"></script><script src="/js/animation.js"></script><a id="back-to-top" title="回到顶端" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back_to_top.js" defer></script><!--!--><!--!--><!--!--><script src="https://cdnjs.loli.net/ajax/libs/lightgallery/1.6.8/js/lightgallery.min.js" defer></script><script src="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.7.0/js/jquery.justifiedGallery.min.js" defer></script><script>window.addEventListener("load", () => {
+            if (typeof $.fn.lightGallery === 'function') {
+                $('.article').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof $.fn.justifiedGallery === 'function') {
+                if ($('.justified-gallery > p > .gallery-item').length) {
+                    $('.justified-gallery > p > .gallery-item').unwrap();
+                }
+                $('.justified-gallery').justifiedGallery();
+            }
+        });</script><!--!--><!--!--><!--!--><script src="/js/main.js" defer></script><script>$.getScript('/js/comment-issue-data.js',function(){loadIssueData('805d0c127d7edb5532bb','89de913bcdc87f3e47e916e5516f21ae8f0a69dd','hujinbin','myBlog',false);})</script><div class="searchbox"><div class="searchbox-container"><div class="searchbox-header"><div class="searchbox-input-container"><input class="searchbox-input" type="text" placeholder="想要查找什么..."></div><a class="searchbox-close" href="javascript:;">×</a></div><div class="searchbox-body"></div></div></div><script src="/js/insight.js" defer></script><script>document.addEventListener('DOMContentLoaded', function () {
+            loadInsight({"contentUrl":"/content.json"}, {"hint":"想要查找什么...","untitled":"(无标题)","posts":"文章","pages":"页面","categories":"分类","tags":"标签"});
+        });</script><script src="/js/pjax.js"></script><script type="text/javascript">var pjax = new Pjax({
+            elements: "a",//代表点击链接就更新
+            selectors: [  //代表要更新的节点
+                "body > .section", // 只替换页面主区域，不匹配文章中的同名区块
+                "body > .navbar-main .navbar-start", // 同步当前菜单高亮，保留搜索和主题切换按钮。
+                "title"
+            ],
+            cache: true,
+            cacheBust:false,
+            timeout: 8000
+        })
+
+        function loadBusuanzi(){
+        $.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js", function () {});
+        }
+
+        // 开始 PJAX 执行的函数
+        document.addEventListener('pjax:send', function () {
+        });
+        
+        // PJAX 完成之后执行的函数，可以和上面的重载放在一起
+        document.addEventListener('pjax:complete', function () {
+            $("body > .section").css({opacity:1});
+            if(false){
+                try{
+                    $.getScript('/js/comment-issue-data.js',function(){loadIssueData('805d0c127d7edb5532bb','89de913bcdc87f3e47e916e5516f21ae8f0a69dd','hujinbin','myBlog',false);});
+                }catch(e){}
+             }
+            if(false){
+                loadMathJax();
+            }
+            loadMainJs(jQuery, window.moment, window.ClipboardJS, window.IcarusThemeSettings);
+            loadBackTop();
+            loadBusuanzi();
+            if(typeof loadBanner == 'function'){
+                loadBanner();
+            }
+        });</script></body></html>

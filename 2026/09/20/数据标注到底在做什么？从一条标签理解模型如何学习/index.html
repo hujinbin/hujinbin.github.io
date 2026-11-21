@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><script id="blog-adsense-loader" data-cfasync="false" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7979174285252748" crossorigin="anonymous"></script><script data-cfasync="false">
+                document.getElementById('blog-adsense-loader').addEventListener('error', function () {
+                    window.__blogAdsenseLoaderFailed = true;
+                    document.dispatchEvent(new Event('adsense:loader-error'));
+                });
+            </script><script data-cfasync="false" defer src="/js/adsense.js?v=1"></script><script>
+                if (window.location.protocol === 'https:') {
+                    var policy = document.createElement('meta');
+                    policy.httpEquiv = 'Content-Security-Policy';
+                    policy.content = 'upgrade-insecure-requests';
+                    document.head.appendChild(policy);
+                }
+            </script><meta><title>数据标注到底在做什么？从一条标签理解模型如何学习 - 胡金斌的个人网站</title><link rel="manifest" href="/manifest.json"><meta name="application-name" content="胡金斌的个人网站"><meta name="msapplication-TileImage" content="https://cdn.jsdelivr.net/gh/removeif/removeif-demo@latest/img/favicon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="胡金斌的个人网站"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="description" content="从用户反馈分类出发，理解数据标注与业务规则、监督学习和评测的关系，并梳理标注类型、质量检查与数据集交付。"><meta property="og:type" content="blog"><meta property="og:title" content="胡金斌"><meta property="og:url" content="https://github.com/hujinbin"><meta property="og:site_name" content="胡金斌"><meta property="og:description" content="从用户反馈分类出发，理解数据标注与业务规则、监督学习和评测的关系，并梳理标注类型、质量检查与数据集交付。"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg"><meta property="article:published_time" content="2026-09-20T03:19:04.000Z"><meta property="article:modified_time" content="2026-11-21T08:17:51.909Z"><meta property="article:author" content="hujinbin"><meta property="article:tag" content="数据标注"><meta property="article:tag" content="机器学习"><meta property="article:tag" content="监督学习"><meta property="article:tag" content="数据质量"><meta property="twitter:card" content="summary"><meta property="twitter:image" content="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://hjb.leheavengame.com/2026/09/20/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F%E4%BB%8E%E4%B8%80%E6%9D%A1%E6%A0%87%E7%AD%BE%E7%90%86%E8%A7%A3%E6%A8%A1%E5%9E%8B%E5%A6%82%E4%BD%95%E5%AD%A6%E4%B9%A0/"},"headline":"胡金斌的个人网站","image":["https://hjb.leheavengame.com/img/og_image.png"],"datePublished":"2026-09-20T03:19:04.000Z","dateModified":"2026-11-21T08:17:51.909Z","author":{"@type":"Person","name":"hujinbin"},"description":"从用户反馈分类出发，理解数据标注与业务规则、监督学习和评测的关系，并梳理标注类型、质量检查与数据集交付。"}</script><link rel="canonical" href="https://hjb.leheavengame.com/2026/09/20/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F%E4%BB%8E%E4%B8%80%E6%9D%A1%E6%A0%87%E7%AD%BE%E7%90%86%E8%A7%A3%E6%A8%A1%E5%9E%8B%E5%A6%82%E4%BD%95%E5%AD%A6%E4%B9%A0/"><link rel="icon" href="https://cdn.jsdelivr.net/gh/removeif/removeif-demo@latest/img/favicon.png"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/5.12.0/css/all.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/highlight.js/9.12.0/styles/atom-one-light.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css2?family=Ubuntu:wght@400;600&amp;family=Source+Code+Pro"><link rel="stylesheet" href="/css/default.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/5.12.0/css/all.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css?family=Ubuntu:400,600|Source+Code+Pro|Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Microsoft YaHei:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&amp;amp;subset=latin,latin-ext|Inconsolata|Itim|Lobster.css"><script src="/js/vendor/jquery-3.3.1.min.js"></script><script src="/js/globalUtils.js"></script><style>body>.footer,body>.navbar,body>.section{opacity:0}</style><!--!--><script>var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            hm.src = "//hm.baidu.com/hm.js?5676cd260145578c2f389fb76f4c82be";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();</script><script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" defer></script><!--!--><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.7.0/css/justifiedGallery.min.css"><!--!--><!--!--><script src="/js/vendor/pace-1.0.2.min.js"></script><link rel="stylesheet" href="/live2d/waifu.css"><script type="text/javascript" async src="/live2d/autoload.js"></script><script>
+        if(window.location.origin === 'http://hjb.leheavengame.com'){
+            window.location.replace("https://hjb.leheavengame.com"+window.location.pathname)
+        }
+        </script><meta name="generator" content="Hexo 5.3.0"></head><body class="is-3-column has-navbar-fixed-top"><nav class="navbar navbar-main is-fixed-top"><div class="container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/"><img src="http://cdn.leheavengame.com/jue/images/bcd357f0-a4c2-11eb-ac26-0f6ed95d4e69.png" alt="胡金斌的个人网站" height="28"></a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">首页</a><a class="navbar-item" href="/archives">归档</a><a class="navbar-item" href="/tags">标签</a><a class="navbar-item" href="/media">影音</a><a class="navbar-item" href="/album">相册</a><a class="navbar-item" href="/friend">友链</a><a class="navbar-item" href="/self-talking">碎碎念</a><a class="navbar-item" href="/message">留言</a><a class="navbar-item" href="/about">关于</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/hujinbin"><i class="fab fa-github"></i></a><a class="navbar-item search" title="搜索" href="javascript:;"><i class="fas fa-search"></i></a><a class="navbar-item" id="night-nav" title="Night Mode" href="javascript:;"><i class="fas fa-moon" id="night-icon"></i></a></div></div></div></nav><script type="text/javascript" src="/js/theme-setting.js"></script><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-9-widescreen"><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><div class="card"><article class="card-content article" role="article"><div class="article-meta size-small is-uppercase level is-mobile"><div class="level-left"><i class="far fa-calendar-plus"> </i>2026-09-20  <a class="commentCountImg" href="/2026/09/20/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F%E4%BB%8E%E4%B8%80%E6%9D%A1%E6%A0%87%E7%AD%BE%E7%90%86%E8%A7%A3%E6%A8%A1%E5%9E%8B%E5%A6%82%E4%BD%95%E5%AD%A6%E4%B9%A0/#comment-container"><span class="display-none-class">527a10ef210761906dfb743a9fae7d27</span><i class="far fa-comment-dots"></i> <span class="commentCount" id="527a10ef210761906dfb743a9fae7d27">99+</span>  </a><span class="level-item"><i class="far fa-clock"> </i>25 分钟  <i class="fas fa-pencil-alt"> </i>3.7 k</span><span class="level-item" id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv">0</span>次访问</span></div></div><h1 class="title is-3 is-size-4-mobile">数据标注到底在做什么？从一条标签理解模型如何学习</h1><div class="content"><p>一提到人工智能，我们经常讨论模型规模、训练速度和推理成本，却容易忽略一个更基础的问题：模型到底应该学会什么？</p>
+<p>以用户反馈分类为例。我们希望系统自动判断一条评论是正向还是负向，但“正向”“负向”并不会天然写在原始文本里。把业务希望模型识别的内容，转化成明确、可记录、可检查的答案，就是数据标注的重要作用。</p>
+<p>这篇文章先讲清原理。下一篇再用 <a href="/2026/11/10/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%AE%9E%E6%88%98%EF%BC%9A%E7%94%A8-Open-Marker-%E8%B7%91%E9%80%9A%E4%BB%8E%E5%8E%9F%E5%A7%8B%E6%96%87%E6%9C%AC%E5%88%B0%E5%AE%A1%E6%A0%B8%E4%BA%A4%E4%BB%98%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B/" title="Open Marker 实战">Open Marker 实战</a>，把这些概念落到一个真正能导入、标注、审核和导出的项目里。</p>
+<a id="more"></a>
+
+<h2 id="一、先从一句用户反馈说起"><a href="#一、先从一句用户反馈说起" class="headerlink" title="一、先从一句用户反馈说起"></a>一、先从一句用户反馈说起</h2><p>假设我们收集到这样一句话：</p>
+<blockquote>
+<p>界面很好看，但上传一直失败。</p>
+</blockquote>
+<p>它是正向评价，还是负向评价？</p>
+<p>如果任务是“判断界面视觉满意度”，它可以是正向。如果任务是“判断整体使用体验”，我们可能更关注上传失败，判为负向。如果任务允许多标签，也可以同时记录“界面满意”和“功能故障”。</p>
+<p>三种答案不一定谁对谁错，因为它们回答的根本不是同一个问题。</p>
+<p>所以，标注不是看到一句话就凭感觉选个标签。开始之前，要先定义：</p>
+<ul>
+<li>标注对象是什么：整段评论、一句话，还是评论中的某个片段？</li>
+<li>希望模型输出什么：情感、问题类型，还是具体实体？</li>
+<li>标签能不能同时出现：单选，还是多选？</li>
+<li>遇到含糊、讽刺、信息不足的内容，怎样处理？</li>
+</ul>
+<p><strong>先把任务定义清楚，再让人去标。</strong> 否则，标注人员看似都很认真，最后得到的数据却可能互相矛盾。</p>
+<h2 id="二、模型怎样利用标注数据"><a href="#二、模型怎样利用标注数据" class="headerlink" title="二、模型怎样利用标注数据"></a>二、模型怎样利用标注数据</h2><p>在监督学习中，可以把一条样本理解成一对数据：输入 <code>x</code> 和目标答案 <code>y</code>。训练时，模型产生预测 <code>ŷ</code>，训练程序计算预测与答案之间的损失，再据此调整模型参数。评估时，则使用未参与训练的样本检查模型的表现。这个基本过程可以参考 <a target="_blank" rel="noopener" href="https://developers.google.com/machine-learning/intro-to-ml/supervised">Google 的监督学习介绍</a>。</p>
+<p>仍以反馈分类为例：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">原始输入 x：这款产品很好用。</span><br><span class="line">人工标签 y：正向</span><br><span class="line"></span><br><span class="line">训练程序把文本转换成模型可以处理的表示</span><br><span class="line">    → 模型预测</span><br><span class="line">    → 与人工标签比较</span><br><span class="line">    → 计算损失</span><br><span class="line">    → 更新参数</span><br></pre></td></tr></table></figure>
+<p>标注平台负责产出文本和对应的标注结果；分词、编码、损失计算、参数更新，由后续训练程序完成。</p>
+<p>这里有两个容易混淆的地方。</p>
+<p>第一，给数据打上标签，并不会自动让模型发生变化。只有把数据接入训练或评测流程，它才会被模型系统利用。</p>
+<p>第二，训练目标不等于“记住所有标注”。我们真正希望的是：模型面对没见过的新评论，也能按照相同的业务规则作出判断。若它只对训练样本表现很好，实际使用时仍可能失败。</p>
+<p>也不是所有机器学习都要求人工逐条标注。无监督学习可以发现数据结构，自监督学习可以从数据本身构造学习信号。本文聚焦的是需要明确业务答案的监督训练、评测和人工反馈场景。</p>
+<h2 id="三、为什么要做数据标注"><a href="#三、为什么要做数据标注" class="headerlink" title="三、为什么要做数据标注"></a>三、为什么要做数据标注</h2><h3 id="1-把业务要求变成可执行的标准"><a href="#1-把业务要求变成可执行的标准" class="headerlink" title="1. 把业务要求变成可执行的标准"></a>1. 把业务要求变成可执行的标准</h3><p>“识别有价值的反馈”是一个愿望，不是足够明确的任务定义。</p>
+<p>如果把它拆成“功能故障”“使用建议”“体验表扬”等类别，并给出每类的边界、正例和反例，标注员才能稳定执行，模型训练也才有明确目标。</p>
+<p>标签体系实际上是一种业务建模：它决定了系统关心哪些差异，又忽略哪些差异。</p>
+<h3 id="2-提供可比较的评测答案"><a href="#2-提供可比较的评测答案" class="headerlink" title="2. 提供可比较的评测答案"></a>2. 提供可比较的评测答案</h3><p>即使不打算训练自己的模型，只调用一个现成模型，也需要知道它在真实业务上表现怎样。</p>
+<p>可以准备一批人工核验过的反馈，让模型独立分类，再统计误判发生在哪些类别、哪些表达方式上。没有可信的参考答案，“我试了几条，感觉还行”就很难变成可重复的评估。</p>
+<p>例如，一套系统可能擅长识别直接表扬，却经常看不懂“可真好用啊，又崩了”这样的反讽。标注数据能够帮助我们把这种问题具体定位出来，而不是只得到一个笼统的整体分数。</p>
+<h3 id="3-把经验留在数据里，而不只留在人脑里"><a href="#3-把经验留在数据里，而不只留在人脑里" class="headerlink" title="3. 把经验留在数据里，而不只留在人脑里"></a>3. 把经验留在数据里，而不只留在人脑里</h3><p>某位熟悉业务的同事，可能一眼就能判断一条反馈的归属。但如果没有规范、样例和审核记录，这份经验很难交接，也很难在团队扩张后保持一致。</p>
+<p>标注流程能把“他知道怎么判断”变成“我们知道按什么规则判断”。规则变化时，还能回头检查旧数据是否需要重标。</p>
+<h3 id="4-为后续迭代提供具体证据"><a href="#4-为后续迭代提供具体证据" class="headerlink" title="4. 为后续迭代提供具体证据"></a>4. 为后续迭代提供具体证据</h3><p>模型上线后发现的问题，可以整理成新的候选样本，经过脱敏、筛选、标注和审核后，再进入下一轮训练或回归评测。</p>
+<p>但不要把每次出错的样本直接塞进训练集，然后继续在同一批样本上报告效果提升。那可能只是把考题提前交给了模型。</p>
+<h2 id="四、标注的不是只有分类标签"><a href="#四、标注的不是只有分类标签" class="headerlink" title="四、标注的不是只有分类标签"></a>四、标注的不是只有分类标签</h2><p>标注结果的形状，取决于任务要回答的问题。</p>
+<table>
+<thead>
+<tr>
+<th>标注任务</th>
+<th>想回答的问题</th>
+<th>结果通常包含什么</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>文本分类</td>
+<td>这段话属于什么类别？</td>
+<td>一个或多个类别标签</td>
+</tr>
+<tr>
+<td>文本实体识别</td>
+<td>哪一段文字是人名、地点等实体？</td>
+<td>起止位置、实体类别、对应文本</td>
+</tr>
+<tr>
+<td>图片目标检测</td>
+<td>什么目标出现在图片的什么位置？</td>
+<td>矩形框坐标、目标类别</td>
+</tr>
+<tr>
+<td>图像分割</td>
+<td>哪些像素属于这个目标？</td>
+<td>像素掩码或轮廓</td>
+</tr>
+<tr>
+<td>语音转写</td>
+<td>这段声音里说了什么？</td>
+<td>转写文本，必要时包括时间信息</td>
+</tr>
+<tr>
+<td>回答偏好标注</td>
+<td>哪个回答更符合要求？</td>
+<td>候选回答的比较或排序</td>
+</tr>
+</tbody></table>
+<p>这些是不同任务，不是换一套标签名称就能互相替代。</p>
+<p>例如，给整张照片标记“有汽车”，不能直接代替目标检测需要的汽车边界框；把一句话标为“包含地点”，也不能代替实体识别需要的具体文本位置。</p>
+<p>后续实战使用的 Open Marker 当前实现了前三类。分割、语音和回答偏好标注不属于它当前已实现的功能。</p>
+<h2 id="五、什么样的标注数据才有用"><a href="#五、什么样的标注数据才有用" class="headerlink" title="五、什么样的标注数据才有用"></a>五、什么样的标注数据才有用</h2><h3 id="规则一致，比操作速度更值得先解决"><a href="#规则一致，比操作速度更值得先解决" class="headerlink" title="规则一致，比操作速度更值得先解决"></a>规则一致，比操作速度更值得先解决</h3><p>假设两个人分别标注同一段话，一个理解为“整体情感”，另一个理解为“是否提出建议”。即使每个人都完成一万条，也只是在更快地积累两套不同标准。</p>
+<p>比较稳妥的做法是先做一小批试标，集中讨论分歧，把规则补清楚，再扩大规模。需要记录的不是一句“按实际情况判断”，而是可操作的边界：</p>
+<blockquote>
+<p>同时出现表扬与故障描述时，如果任务关注整体使用阻碍，按负向处理；单纯询问功能、不表达态度的内容，不强行判断为正向。</p>
+</blockquote>
+<p>这只是一个业务规则示例，不是所有情感分类任务的通用答案。</p>
+<h3 id="不要只挑最容易标的样本"><a href="#不要只挑最容易标的样本" class="headerlink" title="不要只挑最容易标的样本"></a>不要只挑最容易标的样本</h3><p>“非常满意”“太差了”很好标，但真实反馈还会包含短句、错别字、反问、混合情感和行业表达。</p>
+<p>在本例中，我会建议把这些情况分别纳入抽样检查，而不是只追求快速凑够总量。样本数量、类别覆盖和真实场景覆盖是不同维度，不能相互替代。</p>
+<h3 id="审核通过，不等于已经证明标签正确"><a href="#审核通过，不等于已经证明标签正确" class="headerlink" title="审核通过，不等于已经证明标签正确"></a>审核通过，不等于已经证明标签正确</h3><p>“审核通过”首先是流程状态，表示审核人接受了这条结果。审核人也可能误判，或者与标注人共享同一种偏差。</p>
+<p>因此，项目里的通过率不能直接叫作标注准确率。质量检查还可以包括负责人复核争议样本、随机抽检，以及在适合的任务中比较多人独立标注的一致性。后一种一致性检查也不能单独证明所有人都标对了。</p>
+<h3 id="训练集、验证集和测试集要各司其职"><a href="#训练集、验证集和测试集要各司其职" class="headerlink" title="训练集、验证集和测试集要各司其职"></a>训练集、验证集和测试集要各司其职</h3><p>通常用训练集学习参数，用验证集选择方案，最后用保留的测试集评估。反复根据测试结果调方案，会削弱测试集作为独立检验的价值。关于这三者的分工，可参考 <a target="_blank" rel="noopener" href="https://developers.google.com/machine-learning/crash-course/overfitting/dividing-datasets">Google 的数据集划分说明</a>。</p>
+<p>在反馈场景中，还应检查同一段对话、同一事件的改写或近重复文本，是否跨集合出现。我更倾向于先明确业务中的独立单位，再选择按用户、会话、时间或其他分组划分；不能把某一种比例当作所有任务的固定答案。</p>
+<p>划分之后，词表拟合、特征选择等会从数据中学习信息的步骤，也应避免接触测试答案或测试分布中的不应利用的信息。数据泄漏会使评估过于乐观，具体示例可参考 <a target="_blank" rel="noopener" href="https://scikit-learn.org/stable/common_pitfalls.html#data-leakage">scikit-learn 的数据泄漏说明</a>。</p>
+<h2 id="六、有了大模型，还需要人工标注吗"><a href="#六、有了大模型，还需要人工标注吗" class="headerlink" title="六、有了大模型，还需要人工标注吗"></a>六、有了大模型，还需要人工标注吗</h2><p>需要，但不意味着所有样本都必须从头手工处理。</p>
+<p>大模型可以参与生成候选标签，人工负责核对和纠正。以人类反馈训练为例，InstructGPT 的研究使用了人工示范和对模型输出的排序；这说明人的判断不仅用于传统分类任务，也可以形成语言模型训练的监督信号。<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2203.02155">论文：Training language models to follow instructions with human feedback</a></p>
+<p>在具体项目里，更重要的是不要把“模型给出了答案”误认为“答案已经被核实”。</p>
+<p>一种可控的流程是：模型先生成预测，预测与人工标注分开保存，标注员决定是否采用，再进入提交和审核。这样既能追踪预测来源，也能避免新的预测覆盖已经完成的人工结果。</p>
+<p>还有两点需要单独处理：模型给出的置信度不应未经验证就当成真实正确率；把数据发给外部模型之前，要确认服务是否可信、数据是否允许发送。</p>
+<p>Open Marker 目前完成的是这条流程的接口适配与测试，并没有接入真实模型服务。因此，可以说“具备接入预标注的基础”，不能说“已经验证 AI 自动标注的效果”。</p>
+<h2 id="七、从标注数据到可交付的数据集"><a href="#七、从标注数据到可交付的数据集" class="headerlink" title="七、从标注数据到可交付的数据集"></a>七、从标注数据到可交付的数据集</h2><p>对个人实验来说，一个表格也能开始标注。但多人协作后，很快会遇到新的问题：谁在处理哪条数据？修改有没有保存？两个人同时提交会不会覆盖？被驳回的数据如何返工？导出的到底是哪一版？</p>
+<p>标注平台的意义，是让这些问题有明确的处理路径：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">定义任务与规范</span><br><span class="line">    → 导入数据</span><br><span class="line">    → 分配与标注</span><br><span class="line">    → 审核，不通过则返工</span><br><span class="line">    → 导出可追溯的结果</span><br><span class="line">    → 在独立训练或评测流程中使用</span><br></pre></td></tr></table></figure>
+<p>其中，导出格式只是最后一层。一个 JSONL 文件即使语法完全正确，也可能包含不一致的标签、重复样本或未经审核的数据。</p>
+<p>实务上，我会在交付前逐项确认：样本是否有可追踪的标识，标签含义和编号是否稳定，哪些数据经过审核，是否保留必要的版本信息，以及数据使用范围是否已经确认。检查结果应能被另一位同事复核，而不只是依赖作者口头保证。</p>
+<h2 id="写在最后"><a href="#写在最后" class="headerlink" title="写在最后"></a>写在最后</h2><p>数据标注的价值，不在于让文件多一列标签，而在于把业务问题变成可学习、可评测、可复核的目标。</p>
+<p>如果任务定义不清楚，平台只能帮我们更快地生产含糊的数据；如果规范、审核和交付机制都建立起来，即使先从很小的样本集开始，也能形成一条可迭代的工作流程。</p>
+<p>下一篇：<a href="/2026/11/10/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%AE%9E%E6%88%98%EF%BC%9A%E7%94%A8-Open-Marker-%E8%B7%91%E9%80%9A%E4%BB%8E%E5%8E%9F%E5%A7%8B%E6%96%87%E6%9C%AC%E5%88%B0%E5%AE%A1%E6%A0%B8%E4%BA%A4%E4%BB%98%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B/" title="数据标注实战：用 Open Marker 跑通从原始文本到审核交付的完整流程">数据标注实战：用 Open Marker 跑通从原始文本到审核交付的完整流程</a>。</p>
+</div><div class="article-licensing box"><div class="licensing-title"><p>数据标注到底在做什么？从一条标签理解模型如何学习</p><p><a href="https://hjb.leheavengame.com/2026/09/20/数据标注到底在做什么？从一条标签理解模型如何学习/">https://hjb.leheavengame.com/2026/09/20/数据标注到底在做什么？从一条标签理解模型如何学习/</a></p></div><div class="licensing-meta level is-mobile"><div class="level-left"><div class="level-item is-narrow"><div><h6>作者</h6><a href="https://hjb.leheavengame.com"><p>hujinbin</p></a></div></div><div class="level-item is-narrow"><div><h6>发布于</h6><p>2026-09-20</p></div></div><div class="level-item is-narrow"><div><h6>更新于</h6><p>2026-11-21</p></div></div><div class="level-item is-narrow"><div><h6>许可协议</h6><p><a class="icon" rel="noopener" target="_blank" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a><a class="icon" rel="noopener" target="_blank" title="Attribution" href="https://creativecommons.org/licenses/by/4.0/"><i class="fab fa-creative-commons-by"></i></a><a class="icon" rel="noopener" target="_blank" title="Noncommercial" href="https://creativecommons.org/licenses/by-nc/4.0/"><i class="fab fa-creative-commons-nc"></i></a></p></div></div></div></div></div><div class="recommend-area"><div class="recommend-post"><span class="is-size-6 has-text-grey has-mr-7"># 相关文章</span><br><span>  1.<a class="is-size-6" href="/2026/11/18/DeepSeek-Harness-%E5%AE%9E%E6%88%98%EF%BC%9A%E5%81%9A%E4%B8%80%E4%B8%AA%E9%9D%A2%E5%90%91-Three-js-%E4%B8%8E-Python-%E7%9A%84-Agent-CLI/" target="_blank">DeepSeek Harness 实战：做一个面向 Three.js 与 Python 的 Agent CLI</a><br></span><span>  2.<a class="is-size-6" href="/2026/11/10/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%AE%9E%E6%88%98%EF%BC%9A%E7%94%A8-Open-Marker-%E8%B7%91%E9%80%9A%E4%BB%8E%E5%8E%9F%E5%A7%8B%E6%96%87%E6%9C%AC%E5%88%B0%E5%AE%A1%E6%A0%B8%E4%BA%A4%E4%BB%98%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B/" target="_blank">数据标注实战：用 Open Marker 跑通从原始文本到审核交付的完整流程</a><br></span><span>  3.<a class="is-size-6" href="/2026/10/14/LangChain-%E4%B8%8E-LangGraph-%E9%A1%B9%E7%9B%AE%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E5%AF%B9%E8%AF%9D%E7%94%9F%E6%88%90%E5%88%B0%E5%8F%AF%E7%BC%96%E8%BE%91%E5%B7%A5%E4%BD%9C%E6%B5%81/" target="_blank">LangChain 与 LangGraph 项目实战：从对话生成到可编辑工作流</a><br></span><span>  4.<a class="is-size-6" href="/2026/10/02/DeepSeek-Harness-%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90%EF%BC%9A%E4%B8%80%E6%AC%A1%E4%BB%BB%E5%8A%A1%E5%A6%82%E4%BD%95%E4%BB%8E%E6%A8%A1%E5%9E%8B%E8%B5%B0%E5%88%B0%E5%B7%A5%E5%85%B7%E6%89%A7%E8%A1%8C/" target="_blank">DeepSeek Harness 原理解析：一次任务如何从模型走到工具执行</a><br></span><span>  5.<a class="is-size-6" href="/2026/07/24/LangChain-%E5%92%8C-LangGraph-%E7%9A%84%E5%8C%BA%E5%88%AB%EF%BC%8C%E7%BB%93%E5%90%88%E5%8F%AF%E8%A7%86%E5%8C%96%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%90%86%E8%A7%A3%E9%80%89%E5%9E%8B/" target="_blank">LangChain 和 LangGraph 的区别，结合可视化工作流理解选型</a><br></span><span>  6.<a class="is-size-6" href="/2026/06/14/LangGraph-%E5%85%A5%E9%97%A8%EF%BC%9A%E7%94%A8%E7%8A%B6%E6%80%81%E3%80%81%E8%8A%82%E7%82%B9%E5%92%8C%E8%BF%9E%E7%BA%BF%E6%9E%84%E5%BB%BA%E5%B7%A5%E4%BD%9C%E6%B5%81/" target="_blank">LangGraph 入门：用状态、节点和连线构建工作流</a><br></span><span>  7.<a class="is-size-6" href="/2026/05/01/LangChain-%E5%85%A5%E9%97%A8%EF%BC%9A%E7%94%A8-JavaScript-%E7%BB%84%E7%BB%87%E6%A8%A1%E5%9E%8B%E8%B0%83%E7%94%A8%E4%B8%8E%E6%8F%90%E7%A4%BA%E6%A8%A1%E6%9D%BF/" target="_blank">LangChain 入门：用 JavaScript 组织模型调用与提示模板</a><br></span></div></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/social-share.js/1.0.16/css/share.min.css"><div class="social-share"></div><script src="https://cdnjs.loli.net/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script></article></div><div class="card"><div class="card-content"><h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3><div class="buttons is-centered"><a class="button donate" data-type="alipay"><span class="icon is-small"><i class="fab fa-alipay"></i></span><span>支付宝</span><span class="qrcode"><img src="https://img.alicdn.com/imgextra/i4/2509590220/TB2GxhZfjnD8KJjSspbXXbbEXXa_!!2509590220.jpg" alt="支付宝"></span></a><a class="button donate" data-type="wechat"><span class="icon is-small"><i class="fab fa-weixin"></i></span><span>微信</span><span class="qrcode"><img src="https://img.alicdn.com/imgextra/i1/2509590220/TB2K0hPfdnJ8KJjSszdXXaxuFXa_!!2509590220.png" alt="微信"></span></a></div></div></div><nav class="post-navigation mt-4 level is-mobile"><div class="level-start"><a class="article-nav-prev level level-item link-muted" href="/2026/10/02/DeepSeek-Harness-%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90%EF%BC%9A%E4%B8%80%E6%AC%A1%E4%BB%BB%E5%8A%A1%E5%A6%82%E4%BD%95%E4%BB%8E%E6%A8%A1%E5%9E%8B%E8%B5%B0%E5%88%B0%E5%B7%A5%E5%85%B7%E6%89%A7%E8%A1%8C/"><i class="level-item fas fa-chevron-left"></i><span class="level-item">DeepSeek Harness 原理解析：一次任务如何从模型走到工具执行</span></a></div><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/2026/08/07/Claude-Code-%E6%B3%84%E9%9C%B2%E6%BA%90%E7%A0%81%E8%A7%A3%E8%AF%BB-%E4%BB%8E-Agent-%E5%BE%AA%E7%8E%AF%E5%88%B0%E5%B7%A5%E5%85%B7%E6%9D%83%E9%99%90%E4%B8%8E%E4%B8%8A%E4%B8%8B%E6%96%87%E7%AE%A1%E7%90%86/"><span class="level-item">Claude Code 泄露源码解读,从 Agent 循环到工具权限与上下文管理</span><i class="level-item fas fa-chevron-right"></i></a></div></nav><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><div class="card"><div class="card-content"><div class="title is-5">评论</div><div id="comment-container"></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/gitalk/1.6.0/gitalk.css"><script> $.getScript('/js/gitalk.min.js', function () {
+            var cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
+            var gitalk = new Gitalk({
+            language:'zh-CN',
+            id: '527a10ef210761906dfb743a9fae7d27',
+            title: "数据标注到底在做什么？从一条标签理解模型如何学习",
+            url: cleanUrl,
+            repo: 'myBlog',
+            owner: 'hujinbin',
+            clientID: '805d0c127d7edb5532bb',
+            clientSecret: '89de913bcdc87f3e47e916e5516f21ae8f0a69dd',
+            admin: ["hujinbin"],
+            createIssueManually: false,
+            distractionFreeMode: false,
+            perPage: 10,
+            pagerDirection: 'last',
+            labels: ["Gitalk"],
+            proxy: 'https://www.leheavengame.com/api/github/oauth/access_token',
+            
+            enableHotKey: true,
+            isLocked: false
+        })
+        gitalk.render('comment-container')});</script></div></div></div><div class="column column-left is-4-tablet is-4-desktop is-3-widescreen  order-1 is-sticky"><!--!--><div class="card widget" data-type="profile"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="avatar is-rounded" src="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg" alt="胡金斌"></figure><p class="title is-size-4 is-block" style="line-height:inherit;">胡金斌</p><p class="is-size-6 is-block">前端 / 全栈开发工程师</p><p class="is-size-6 is-flex justify-content-center"><i class="fas fa-map-marker-alt mr-1"></i><span>浙江杭州</span></p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">文章</p><a href="/archives"><p class="title">66</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">分类</p><a href="/categories"><p class="title">1</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">标签</p><a href="/tags"><p class="title">83</p></a></div></div></nav><div class="level"><a class="level-item button is-primary is-rounded" href="https://github.com/hujinbin" target="_blank" rel="noopener">关注我</a></div><div class="level is-mobile"><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="Github" href="https://github.com/hujinbin"><i class="fab fa-github"></i></a><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="Email" href="mailto:437044048@qq.com"><i class="fa fa-envelope"></i></a><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="RSS" href="/atom.xml"><i class="fas fa-rss"></i></a></div><div><hr><p id="hitokoto">:D 一言句子获取中...</p><script type="text/javascript" defer>function getYiyan(){
+                                $.getJSON("https://v1.hitokoto.cn/", function (data) {
+                                if(data){
+                                    $('#hitokoto').html("");
+                                    $('#hitokoto').append("<strong style='color: #3273dc;'>"+data.hitokoto+"</strong>"+
+                                    "<p>"+"来源《"+data.from+"》</p><p>提供者-"+data.creator+"</p>");
+                                }});}
+                                $(function (){getYiyan();$('#hitokoto').click(function(){getYiyan();})});</script></div></div></div><div class="card widget" data-type="links"><div class="card-content"><div class="menu"><h3 class="menu-label">链接</h3><ul class="menu-list"><li><a class="level is-mobile" href="https://cash.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惠shop好货</span></span><span class="level-right"><span class="level-item tag">cash.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://jue.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惊觉</span></span><span class="level-right"><span class="level-item tag">jue.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://bbs.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">乾学网</span></span><span class="level-right"><span class="level-item tag">bbs.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://guide.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">乾坤宝录</span></span><span class="level-right"><span class="level-item tag">guide.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://coupon.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惠shop</span></span><span class="level-right"><span class="level-item tag">coupon.leheavengame.com</span></span></a></li></ul></div></div></div><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><!--!--><div class="card widget"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-11-18T14:05:35.000Z">2026-11-18</time></p><p class="title"><a href="/2026/11/18/DeepSeek-Harness-%E5%AE%9E%E6%88%98%EF%BC%9A%E5%81%9A%E4%B8%80%E4%B8%AA%E9%9D%A2%E5%90%91-Three-js-%E4%B8%8E-Python-%E7%9A%84-Agent-CLI/">DeepSeek Harness 实战：做一个面向 Three.js 与 Python 的 Agent CLI</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-11-10T12:19:06.000Z">2026-11-10</time></p><p class="title"><a href="/2026/11/10/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%AE%9E%E6%88%98%EF%BC%9A%E7%94%A8-Open-Marker-%E8%B7%91%E9%80%9A%E4%BB%8E%E5%8E%9F%E5%A7%8B%E6%96%87%E6%9C%AC%E5%88%B0%E5%AE%A1%E6%A0%B8%E4%BA%A4%E4%BB%98%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B/">数据标注实战：用 Open Marker 跑通从原始文本到审核交付的完整流程</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-10-14T15:16:49.000Z">2026-10-14</time></p><p class="title"><a href="/2026/10/14/LangChain-%E4%B8%8E-LangGraph-%E9%A1%B9%E7%9B%AE%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E5%AF%B9%E8%AF%9D%E7%94%9F%E6%88%90%E5%88%B0%E5%8F%AF%E7%BC%96%E8%BE%91%E5%B7%A5%E4%BD%9C%E6%B5%81/">LangChain 与 LangGraph 项目实战：从对话生成到可编辑工作流</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-10-02T09:05:33.000Z">2026-10-02</time></p><p class="title"><a href="/2026/10/02/DeepSeek-Harness-%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90%EF%BC%9A%E4%B8%80%E6%AC%A1%E4%BB%BB%E5%8A%A1%E5%A6%82%E4%BD%95%E4%BB%8E%E6%A8%A1%E5%9E%8B%E8%B5%B0%E5%88%B0%E5%B7%A5%E5%85%B7%E6%89%A7%E8%A1%8C/">DeepSeek Harness 原理解析：一次任务如何从模型走到工具执行</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-09-20T03:19:04.000Z">2026-09-20</time></p><p class="title"><a href="/2026/09/20/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F%E4%BB%8E%E4%B8%80%E6%9D%A1%E6%A0%87%E7%AD%BE%E7%90%86%E8%A7%A3%E6%A8%A1%E5%9E%8B%E5%A6%82%E4%BD%95%E5%AD%A6%E4%B9%A0/">数据标注到底在做什么？从一条标签理解模型如何学习</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">分类</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/categories/AI-%E5%BC%80%E5%8F%91/"><span class="level-start"><span class="level-item">AI 开发</span></span><span class="level-end"><span class="level-item tag">8</span></span></a></li></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">归档</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/archives/2026/11/"><span class="level-start"><span class="level-item">十一月 2026</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/10/"><span class="level-start"><span class="level-item">十月 2026</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/09/"><span class="level-start"><span class="level-item">九月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/08/"><span class="level-start"><span class="level-item">八月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/07/"><span class="level-start"><span class="level-item">七月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><a class="level is-mobile is-marginless" href="/archives/"><span class="level-start"><span class="level-item">查看全部&gt;&gt;</span></span></a></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">标签</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/javascript/"><span class="tag">javascript</span><span class="tag is-grey-lightest">39</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Agent/"><span class="tag">AI Agent</span><span class="tag is-grey-lightest">6</span></a></div><div class="control"><a class="tags has-addons" href="/tags/node/"><span class="tag">node</span><span class="tag is-grey-lightest">6</span></a></div><div class="control"><a class="tags has-addons" href="/tags/Vue/"><span class="tag">Vue</span><span class="tag is-grey-lightest">5</span></a></div><div class="control"><a class="tags has-addons" href="/tags/LangChain/"><span class="tag">LangChain</span><span class="tag is-grey-lightest">4</span></a></div><div class="control"><a class="tags has-addons" href="/tags/TypeScript/"><span class="tag">TypeScript</span><span class="tag is-grey-lightest">4</span></a></div><div class="control"><a class="tags has-addons" href="/tags/JavaScript/"><span class="tag">JavaScript</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/LangGraph/"><span class="tag">LangGraph</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/css/"><span class="tag">css</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI/"><span class="tag">AI</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Tools/"><span class="tag">AI Tools</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/DeepSeek-Harness/"><span class="tag">DeepSeek Harness</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/MCP/"><span class="tag">MCP</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/Three-js/"><span class="tag">Three.js</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/http/"><span class="tag">http</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91/"><span class="tag">前端开发</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/"><span class="tag">工作流</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8/"><span class="tag">数据标注</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/3D%E5%8F%AF%E8%A7%86%E5%8C%96/"><span class="tag">3D可视化</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Skill/"><span class="tag">AI Skill</span><span class="tag is-grey-lightest">1</span></a></div></div><div class="field is-grouped is-grouped-multiline"><a class="tags has-addons" href="/tags/"><span class="tag">查看全部&gt;&gt;</span></a></div></div></div></div><div class="card widget" data-type="subscribe-email"><div class="card-content"><div class="menu"><h3 class="menu-label">订阅更新</h3><form action="https://feedburner.google.com/fb/a/mailverify" method="post" target="popupwindow" onsubmit="window.open(&#039;https://feedburner.google.com/fb/a/mailverify?uri=&#039;,&#039;popupwindow&#039;,&#039;scrollbars=yes,width=550,height=520&#039;);return true"><input type="hidden" value="" name="uri"><input type="hidden" name="loc" value="en_US"><div class="field has-addons"><div class="control has-icons-left is-expanded"><input class="input" name="email" type="email" placeholder="Email"><span class="icon is-small is-left"><i class="fas fa-envelope"></i></span></div><div class="control"><input class="button" type="submit" value="订阅"></div></div></form></div></div></div><div class="column-right-shadow is-hidden-widescreen"></div></div></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/"><img src="http://cdn.leheavengame.com/jue/images/bcd357f0-a4c2-11eb-ac26-0f6ed95d4e69.png" alt="胡金斌的个人网站" height="28"></a><p class="size-small"><span>&copy; 2026 hujinbin</span>  <br><span>© <a href="https://beian.miit.gov.cn/" rel="nofollow noopener noreferrer" target="_blank">浙ICP备17021862号-1</a><br></span><span>© 版权说明：[本网站所有内容均收集于互联网或自己创作,<br />&nbsp;&nbsp;&nbsp;&nbsp;方便于网友与自己学习交流，如有侵权，请<a href="/message" target="_blank">留言</a>，立即处理]<br /></span><span><span id="statistic-times">loading...</span><script>function createTime(time) {
+            var n = new Date(time);
+            now.setTime(now.getTime() + 250),
+                days = (now - n) / 1e3 / 60 / 60 / 24,
+                dnum = Math.floor(days),
+                hours = (now - n) / 1e3 / 60 / 60 - 24 * dnum,
+                hnum = Math.floor(hours),
+            1 == String(hnum).length && (hnum = "0" + hnum),
+                minutes = (now - n) / 1e3 / 60 - 1440 * dnum - 60 * hnum,
+                mnum = Math.floor(minutes),
+            1 == String(mnum).length && (mnum = "0" + mnum),
+                seconds = (now - n) / 1e3 - 86400 * dnum - 3600 * hnum - 60 * mnum,
+                snum = Math.round(seconds),
+            1 == String(snum).length && (snum = "0" + snum),
+                document.getElementById("statistic-times").innerHTML = "❤️本站自 <strong>"+time.split(" ")[0].replace(/\//g,".")+"</strong> 已运行 <strong>" + dnum + "</strong> 天 <strong>" + hnum + "</strong> 小时 <strong>" + mnum + "</strong> 分 <strong>" + snum + "</strong> 秒！❤️";
+        }var now = new Date();setInterval("createTime('2017/05/25 00:00:00')", 250,"");</script><br></span><div class="size-small"><span>❤️感谢 <strong><span id="busuanzi_value_site_uv">99+</span></strong> 小伙伴的 <strong><span id="busuanzi_value_site_pv">99+</span></strong> 次光临！❤️</span></div></p></div><div class="level-end"><div class="sideMusic"><link rel="stylesheet" href="/css/APlayer.min.css"><script src="/js/APlayer.min.js"></script><script src="/js/Meting.min.js"></script><meting-js style="width: auto;height: 2000px;" server="netease" type="playlist" id="2364053447" theme="#2980b9" loop="all" autoplay="false" order="list" storageName="aplayer-setting" lrctype="0" list-max-height="400px" fixed="true"></meting-js></div></div></div></div><script>
+            var bp = document.createElement('script');
+            var curProtocol = window.location.protocol.split(':')[0];
+            if (curProtocol === 'https') {
+                bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+            }
+            else {
+                bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+            }
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(bp, s);
+        </script></footer><script src="/js/vendor/moment-with-locales-2.22.2.min.js"></script><script src="/js/vendor/clipboard-2.0.4.min.js" defer></script><script>moment.locale("zh-CN");</script><script>var IcarusThemeSettings = {
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="/js/column.js"></script><script src="/js/animation.js"></script><a id="back-to-top" title="回到顶端" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back_to_top.js" defer></script><!--!--><!--!--><!--!--><script src="https://cdnjs.loli.net/ajax/libs/lightgallery/1.6.8/js/lightgallery.min.js" defer></script><script src="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.7.0/js/jquery.justifiedGallery.min.js" defer></script><script>window.addEventListener("load", () => {
+            if (typeof $.fn.lightGallery === 'function') {
+                $('.article').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof $.fn.justifiedGallery === 'function') {
+                if ($('.justified-gallery > p > .gallery-item').length) {
+                    $('.justified-gallery > p > .gallery-item').unwrap();
+                }
+                $('.justified-gallery').justifiedGallery();
+            }
+        });</script><!--!--><!--!--><!--!--><script src="/js/main.js" defer></script><script>$.getScript('/js/comment-issue-data.js',function(){loadIssueData('805d0c127d7edb5532bb','89de913bcdc87f3e47e916e5516f21ae8f0a69dd','hujinbin','myBlog',false);})</script><div class="searchbox"><div class="searchbox-container"><div class="searchbox-header"><div class="searchbox-input-container"><input class="searchbox-input" type="text" placeholder="想要查找什么..."></div><a class="searchbox-close" href="javascript:;">×</a></div><div class="searchbox-body"></div></div></div><script src="/js/insight.js" defer></script><script>document.addEventListener('DOMContentLoaded', function () {
+            loadInsight({"contentUrl":"/content.json"}, {"hint":"想要查找什么...","untitled":"(无标题)","posts":"文章","pages":"页面","categories":"分类","tags":"标签"});
+        });</script><script src="/js/pjax.js"></script><script type="text/javascript">var pjax = new Pjax({
+            elements: "a",//代表点击链接就更新
+            selectors: [  //代表要更新的节点
+                "body > .section", // 只替换页面主区域，不匹配文章中的同名区块
+                "body > .navbar-main .navbar-start", // 同步当前菜单高亮，保留搜索和主题切换按钮。
+                "title"
+            ],
+            cache: true,
+            cacheBust:false,
+            timeout: 8000
+        })
+
+        function loadBusuanzi(){
+        $.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js", function () {});
+        }
+
+        // 开始 PJAX 执行的函数
+        document.addEventListener('pjax:send', function () {
+        });
+        
+        // PJAX 完成之后执行的函数，可以和上面的重载放在一起
+        document.addEventListener('pjax:complete', function () {
+            $("body > .section").css({opacity:1});
+            if(false){
+                try{
+                    $.getScript('/js/comment-issue-data.js',function(){loadIssueData('805d0c127d7edb5532bb','89de913bcdc87f3e47e916e5516f21ae8f0a69dd','hujinbin','myBlog',false);});
+                }catch(e){}
+             }
+            if(false){
+                loadMathJax();
+            }
+            loadMainJs(jQuery, window.moment, window.ClipboardJS, window.IcarusThemeSettings);
+            loadBackTop();
+            loadBusuanzi();
+            if(typeof loadBanner == 'function'){
+                loadBanner();
+            }
+        });</script></body></html>

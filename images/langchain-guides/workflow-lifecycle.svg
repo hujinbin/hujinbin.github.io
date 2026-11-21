@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="820" viewBox="0 0 680 820" role="img" aria-labelledby="title desc">
+  <title id="title">从设计草稿到运行结果</title>
+  <desc id="desc">设计阶段：自然语言需求经过设计助手生成草稿，用户编辑并校验保存。执行阶段：已保存的流程定义和本次输入交给图执行器，调度业务节点后记录状态与结果。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="#64748b"/></marker>
+  </defs>
+  <rect width="680" height="820" rx="20" fill="#f8fafc"/>
+  <g font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" text-anchor="middle">
+    <text x="340" y="50" font-size="28" font-weight="700" fill="#0f172a">从设计草稿到运行结果</text>
+    <rect x="28" y="78" width="624" height="304" rx="16" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text x="340" y="115" font-size="22" font-weight="700" fill="#1e40af">设计阶段 · 决定怎样做</text>
+    <rect x="62" y="134" width="556" height="62" rx="10" fill="#fff" stroke="#93c5fd"/>
+    <text x="340" y="173" font-size="21" fill="#1e3a8a">需求 + 当前流程 + 可用节点目录</text>
+    <path d="M340 198 V219" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="62" y="228" width="556" height="62" rx="10" fill="#fff" stroke="#93c5fd"/>
+    <text x="340" y="267" font-size="21" fill="#1e3a8a">设计助手生成草稿 → 结构与业务校验</text>
+    <path d="M340 292 V313" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="340" y="350" font-size="22" font-weight="700" fill="#1e40af">用户编辑、校验并保存流程定义</text>
+    <path d="M340 385 V443" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <rect x="365" y="401" width="235" height="28" fill="#f8fafc"/>
+    <text x="477" y="422" font-size="18" fill="#475569">点击运行 · 提交本次输入</text>
+    <rect x="28" y="452" width="624" height="304" rx="16" fill="#f0fdfa" stroke="#99f6e4"/>
+    <text x="340" y="489" font-size="22" font-weight="700" fill="#115e59">执行阶段 · 按定义处理输入</text>
+    <rect x="62" y="508" width="556" height="62" rx="10" fill="#fff" stroke="#5eead4"/>
+    <text x="340" y="547" font-size="21" fill="#134e4a">确定版本的流程定义 + 本次运行输入</text>
+    <path d="M340 572 V593" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+    <rect x="62" y="602" width="556" height="62" rx="10" fill="#fff" stroke="#5eead4"/>
+    <text x="340" y="641" font-size="21" fill="#134e4a">图执行器 → 调度节点 → 合并状态</text>
+    <path d="M340 666 V687" stroke="#64748b" stroke-width="2" marker-end="url(#arrow)"/>
+    <text x="340" y="724" font-size="22" font-weight="700" fill="#115e59">记录阶段结果，反馈进度与最终输出</text>
+    <text x="340" y="794" font-size="19" fill="#475569">同一份定义，可以使用不同输入重复运行</text>
+  </g>
+</svg>

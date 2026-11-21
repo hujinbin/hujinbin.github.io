@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="730" viewBox="0 0 680 730" role="img" aria-labelledby="title desc">
+  <title id="title">工单分流：一次选择一个处理分支</title>
+  <desc id="desc">输入咨询进入分类节点。按规则优先匹配退款，否则匹配发票，其余进入普通咨询。选中的分支完成后整理回复，另外两个分支不执行。</desc>
+  <defs><marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#64748b"/></marker></defs>
+  <rect width="680" height="730" rx="20" fill="#f8fafc"/>
+  <g font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" text-anchor="middle">
+    <text x="340" y="48" font-size="27" font-weight="700" fill="#0f172a">工单分流：一次选择一个处理分支</text>
+    <text x="340" y="82" font-size="19" fill="#475569">规则负责分类，图负责沿选定路径执行</text>
+    <rect x="100" y="112" width="480" height="70" rx="12" fill="#e0e7ff" stroke="#a5b4fc"/>
+    <text x="340" y="155" font-size="23" font-weight="700" fill="#312e81">输入咨询 · START</text>
+    <path d="M340 185 V218" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <rect x="100" y="228" width="480" height="82" rx="12" fill="#dbeafe" stroke="#93c5fd"/>
+    <text x="340" y="262" font-size="23" font-weight="700" fill="#1e3a8a">分类节点</text>
+    <text x="340" y="291" font-size="18" fill="#1e40af">写入类别 → 路由选择下一步</text>
+    <g fill="none" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)">
+      <path d="M340 312 V337 H124 V388"/>
+      <path d="M340 312 V388"/>
+      <path d="M340 312 V337 H556 V388"/>
+    </g>
+    <g fill="#f8fafc"><rect x="77" y="353" width="94" height="29"/><rect x="293" y="353" width="94" height="29"/><rect x="509" y="353" width="94" height="29"/></g>
+    <g font-size="18" fill="#475569"><text x="124" y="376">退款优先</text><text x="340" y="376">其次开票</text><text x="556" y="376">其余咨询</text></g>
+    <rect x="28" y="400" width="192" height="82" rx="12" fill="#fff7ed" stroke="#fdba74"/>
+    <rect x="244" y="400" width="192" height="82" rx="12" fill="#ccfbf1" stroke="#5eead4"/>
+    <rect x="460" y="400" width="192" height="82" rx="12" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="124" y="434" font-size="22" font-weight="700" fill="#7c2d12">退款处理</text>
+    <text x="124" y="463" font-size="18" fill="#9a3412">准备回复</text>
+    <text x="340" y="434" font-size="22" font-weight="700" fill="#134e4a">开票处理</text>
+    <text x="340" y="463" font-size="18" fill="#115e59">准备回复</text>
+    <text x="556" y="434" font-size="22" font-weight="700" fill="#334155">普通咨询</text>
+    <text x="556" y="463" font-size="18" fill="#475569">准备回复</text>
+    <g fill="none" stroke="#64748b" stroke-width="2.5"><path d="M124 485 V516 H556 V485"/><path d="M340 485 V548" marker-end="url(#arrow)"/></g>
+    <rect x="100" y="560" width="480" height="70" rx="12" fill="#dbeafe" stroke="#93c5fd"/>
+    <text x="340" y="603" font-size="23" font-weight="700" fill="#1e3a8a">整理回复 → END</text>
+    <text x="340" y="673" font-size="21" font-weight="700" fill="#334155">只等待选中的分支完成</text>
+    <text x="340" y="706" font-size="18" fill="#475569">未选中的两个分支不会执行，也不参与等待</text>
+  </g>
+</svg>

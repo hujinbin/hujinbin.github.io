@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="zh"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"><script id="blog-adsense-loader" data-cfasync="false" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7979174285252748" crossorigin="anonymous"></script><script data-cfasync="false">
+                document.getElementById('blog-adsense-loader').addEventListener('error', function () {
+                    window.__blogAdsenseLoaderFailed = true;
+                    document.dispatchEvent(new Event('adsense:loader-error'));
+                });
+            </script><script data-cfasync="false" defer src="/js/adsense.js?v=1"></script><script>
+                if (window.location.protocol === 'https:') {
+                    var policy = document.createElement('meta');
+                    policy.httpEquiv = 'Content-Security-Policy';
+                    policy.content = 'upgrade-insecure-requests';
+                    document.head.appendChild(policy);
+                }
+            </script><meta><title>LangGraph 入门：用状态、节点和连线构建工作流 - 胡金斌的个人网站</title><link rel="manifest" href="/manifest.json"><meta name="application-name" content="胡金斌的个人网站"><meta name="msapplication-TileImage" content="https://cdn.jsdelivr.net/gh/removeif/removeif-demo@latest/img/favicon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="胡金斌的个人网站"><meta name="apple-mobile-web-app-status-bar-style" content="default"><meta name="description" content="用工单分流案例理解 LangGraph 的状态、节点、reducer 与路由，分清互斥分支和并行汇合，并掌握循环、检查点与人工恢复的实现思路。"><meta property="og:type" content="blog"><meta property="og:title" content="胡金斌"><meta property="og:url" content="https://github.com/hujinbin"><meta property="og:site_name" content="胡金斌"><meta property="og:description" content="用工单分流案例理解 LangGraph 的状态、节点、reducer 与路由，分清互斥分支和并行汇合，并掌握循环、检查点与人工恢复的实现思路。"><meta property="og:locale" content="zh_CN"><meta property="og:image" content="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg"><meta property="article:published_time" content="2026-06-14T15:43:45.000Z"><meta property="article:modified_time" content="2026-11-21T08:17:51.893Z"><meta property="article:author" content="hujinbin"><meta property="article:tag" content="LangGraph"><meta property="article:tag" content="工作流"><meta property="article:tag" content="JavaScript"><meta property="article:tag" content="状态管理"><meta property="twitter:card" content="summary"><meta property="twitter:image" content="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg"><script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","mainEntityOfPage":{"@type":"WebPage","@id":"https://hjb.leheavengame.com/2026/06/14/LangGraph-%E5%85%A5%E9%97%A8%EF%BC%9A%E7%94%A8%E7%8A%B6%E6%80%81%E3%80%81%E8%8A%82%E7%82%B9%E5%92%8C%E8%BF%9E%E7%BA%BF%E6%9E%84%E5%BB%BA%E5%B7%A5%E4%BD%9C%E6%B5%81/"},"headline":"胡金斌的个人网站","image":[],"datePublished":"2026-06-14T15:43:45.000Z","dateModified":"2026-11-21T08:17:51.893Z","author":{"@type":"Person","name":"hujinbin"},"description":"用工单分流案例理解 LangGraph 的状态、节点、reducer 与路由，分清互斥分支和并行汇合，并掌握循环、检查点与人工恢复的实现思路。"}</script><link rel="canonical" href="https://hjb.leheavengame.com/2026/06/14/LangGraph-%E5%85%A5%E9%97%A8%EF%BC%9A%E7%94%A8%E7%8A%B6%E6%80%81%E3%80%81%E8%8A%82%E7%82%B9%E5%92%8C%E8%BF%9E%E7%BA%BF%E6%9E%84%E5%BB%BA%E5%B7%A5%E4%BD%9C%E6%B5%81/"><link rel="icon" href="https://cdn.jsdelivr.net/gh/removeif/removeif-demo@latest/img/favicon.png"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/5.12.0/css/all.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/highlight.js/9.12.0/styles/atom-one-light.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css2?family=Ubuntu:wght@400;600&amp;family=Source+Code+Pro"><link rel="stylesheet" href="/css/default.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/font-awesome/5.12.0/css/all.min.css"><link rel="stylesheet" href="https://fonts.loli.net/css?family=Ubuntu:400,600|Source+Code+Pro|Monda:300,300italic,400,400italic,700,700italic|Roboto Slab:300,300italic,400,400italic,700,700italic|Microsoft YaHei:300,300italic,400,400italic,700,700italic|PT Mono:300,300italic,400,400italic,700,700italic&amp;amp;subset=latin,latin-ext|Inconsolata|Itim|Lobster.css"><script src="/js/vendor/jquery-3.3.1.min.js"></script><script src="/js/globalUtils.js"></script><style>body>.footer,body>.navbar,body>.section{opacity:0}</style><!--!--><script>var _hmt = _hmt || [];
+        (function() {
+            var hm = document.createElement("script");
+            hm.src = "//hm.baidu.com/hm.js?5676cd260145578c2f389fb76f4c82be";
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(hm, s);
+        })();</script><script src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js" defer></script><!--!--><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/lightgallery/1.6.8/css/lightgallery.min.css"><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.7.0/css/justifiedGallery.min.css"><!--!--><!--!--><script src="/js/vendor/pace-1.0.2.min.js"></script><link rel="stylesheet" href="/live2d/waifu.css"><script type="text/javascript" async src="/live2d/autoload.js"></script><script>
+        if(window.location.origin === 'http://hjb.leheavengame.com'){
+            window.location.replace("https://hjb.leheavengame.com"+window.location.pathname)
+        }
+        </script><meta name="generator" content="Hexo 5.3.0"></head><body class="is-3-column has-navbar-fixed-top"><nav class="navbar navbar-main is-fixed-top"><div class="container"><div class="navbar-brand justify-content-center"><a class="navbar-item navbar-logo" href="/"><img src="http://cdn.leheavengame.com/jue/images/bcd357f0-a4c2-11eb-ac26-0f6ed95d4e69.png" alt="胡金斌的个人网站" height="28"></a></div><div class="navbar-menu"><div class="navbar-start"><a class="navbar-item" href="/">首页</a><a class="navbar-item" href="/archives">归档</a><a class="navbar-item" href="/tags">标签</a><a class="navbar-item" href="/media">影音</a><a class="navbar-item" href="/album">相册</a><a class="navbar-item" href="/friend">友链</a><a class="navbar-item" href="/self-talking">碎碎念</a><a class="navbar-item" href="/message">留言</a><a class="navbar-item" href="/about">关于</a></div><div class="navbar-end"><a class="navbar-item" target="_blank" rel="noopener" title="Download on GitHub" href="https://github.com/hujinbin"><i class="fab fa-github"></i></a><a class="navbar-item search" title="搜索" href="javascript:;"><i class="fas fa-search"></i></a><a class="navbar-item" id="night-nav" title="Night Mode" href="javascript:;"><i class="fas fa-moon" id="night-icon"></i></a></div></div></div></nav><script type="text/javascript" src="/js/theme-setting.js"></script><section class="section"><div class="container"><div class="columns"><div class="column order-2 column-main is-8-tablet is-8-desktop is-9-widescreen"><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><div class="card"><article class="card-content article" role="article"><div class="article-meta size-small is-uppercase level is-mobile"><div class="level-left"><i class="far fa-calendar-plus"> </i>2026-06-14  <a class="commentCountImg" href="/2026/06/14/LangGraph-%E5%85%A5%E9%97%A8%EF%BC%9A%E7%94%A8%E7%8A%B6%E6%80%81%E3%80%81%E8%8A%82%E7%82%B9%E5%92%8C%E8%BF%9E%E7%BA%BF%E6%9E%84%E5%BB%BA%E5%B7%A5%E4%BD%9C%E6%B5%81/#comment-container"><span class="display-none-class">7a870b405e5c5cdf716ffca9d0feeb1a</span><i class="far fa-comment-dots"></i> <span class="commentCount" id="7a870b405e5c5cdf716ffca9d0feeb1a">99+</span>  </a><span class="level-item"><i class="far fa-clock"> </i>32 分钟  <i class="fas fa-pencil-alt"> </i>4.8 k</span><span class="level-item" id="busuanzi_container_page_pv"><span id="busuanzi_value_page_pv">0</span>次访问</span></div></div><h1 class="title is-3 is-size-4-mobile">LangGraph 入门：用状态、节点和连线构建工作流</h1><div class="content"><p>一段任务只有“接收输入 → 调用函数 → 返回结果”时，用普通异步函数就很好理解。需求一旦变成“按类型走不同处理器”“等两个步骤完成再汇总”“检查不通过就修改”，需要关心的就不只是某个函数，而是整个执行过程。</p>
+<p>例如，一个客服工具要先判断咨询类型，再分别准备退款、开票或普通问题的回复。后来又增加了查询订单、检查回复、交给人工确认等步骤。此时我们需要回答：当前有哪些数据？下一步为什么执行？失败后会重复哪些操作？</p>
+<p>LangGraph 用状态、节点和边描述这类任务。本文从一个不依赖模型的工单分流案例开始，沿着一次运行解释它的工作方式，再讨论并发、循环和恢复。这里侧重原理与实现步骤，不展开具体项目的服务端代码。</p>
+<a id="more"></a>
+
+<h2 id="一、先区分流程定义和运行状态"><a href="#一、先区分流程定义和运行状态" class="headerlink" title="一、先区分流程定义和运行状态"></a>一、先区分流程定义和运行状态</h2><p>可以先把工作流分成两个对象：<strong>流程定义描述允许经过哪些步骤，运行状态记录某一次执行已经得到什么。</strong></p>
+<p>同一份工单分流定义，可以处理很多条咨询。第一条咨询走退款分支，第二条走开票分支，它们复用的是结构，各自的输入和结果仍需要隔离。以后接入检查点时，同一线程内的多次调用还可以延续状态，但这是需要明确配置的行为。</p>
+<p>几个常见术语可以这样对应：</p>
+<table>
+<thead>
+<tr>
+<th>概念</th>
+<th>负责什么</th>
+<th>工单案例中的例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>State</td>
+<td>保存后续步骤需要读取的数据</td>
+<td>咨询内容、类别、回复草稿</td>
+</tr>
+<tr>
+<td>Node</td>
+<td>读取状态，完成一步处理并返回更新</td>
+<td>分类、准备开票回复</td>
+</tr>
+<tr>
+<td>Edge</td>
+<td>表达后续节点的执行关系</td>
+<td>分类完成后选择处理分支</td>
+</tr>
+<tr>
+<td>Reducer</td>
+<td>决定一个状态字段怎样接收更新</td>
+<td>将新的处理记录追加到轨迹</td>
+</tr>
+<tr>
+<td>Compile</td>
+<td>把状态与节点关系组织成可执行的图</td>
+<td>构建可反复调用的分流流程</td>
+</tr>
+<tr>
+<td>Invoke</td>
+<td>向图提交输入并取得执行结果</td>
+<td>处理“请开电子发票”这次请求</td>
+</tr>
+</tbody></table>
+<p><code>START</code> 和 <code>END</code> 是图的入口与结束标记，不需要各自实现一个业务处理函数。LangGraph 的节点既能调用模型，也能做普通计算或访问已有服务，详见<a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/javascript/langgraph/overview">官方概览</a>。</p>
+<p>状态也不必包含一切。咨询内容和分类结果属于业务数据；模型客户端、数据库连接等运行依赖，通常通过上下文或依赖注入提供。这样需要持久化的内容更清楚，也更容易单独检查节点行为。</p>
+<h2 id="二、用一个工单分流器说明路由"><a href="#二、用一个工单分流器说明路由" class="headerlink" title="二、用一个工单分流器说明路由"></a>二、用一个工单分流器说明路由</h2><p>为了先观察控制流程，假设分类只使用明确的关键词规则：</p>
+<ol>
+<li>包含“退款”，选择退款分支。</li>
+<li>否则，包含“发票”，选择开票分支。</li>
+<li>其余进入普通咨询分支。</li>
+</ol>
+<p>图的结构如下。三个处理分支互斥，一次只选择其中一个：</p>
+<p><img src="/images/langchain-guides/langgraph-ticket-routing.svg" alt="工单分流流程：咨询先经过规则分类，再选择退款、开票或普通咨询中的一个分支，最后整理回复并结束"></p>
+<table>
+<thead>
+<tr>
+<th>输入</th>
+<th>按本例规则选择的分支</th>
+<th>回复的目的</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>我要申请退款</td>
+<td>退款</td>
+<td>提示补充用于核对的信息</td>
+</tr>
+<tr>
+<td>请开电子发票</td>
+<td>开票</td>
+<td>提示填写开票信息</td>
+</tr>
+<tr>
+<td>课程在哪里看</td>
+<td>普通咨询</td>
+<td>引导补充问题详情</td>
+</tr>
+<tr>
+<td>退款并补开发票</td>
+<td>退款</td>
+<td>按已经声明的优先级处理</td>
+</tr>
+</tbody></table>
+<p>这是一份教学用的规则推演，不是客服意图识别的完整方案。比如“不要退款，我只是问发票”也包含“退款”，仍会命中第一条规则。LangGraph 会按照定义调度，无法替分类规则理解否定含义。</p>
+<p>这个局限反而有助于分清职责：<strong>分类是否正确，是分类节点的质量；分类之后是否进入约定分支，是图的控制逻辑。</strong> 将来把关键词分类替换成模型分类时，只要仍然输出约定的类别，后面的处理节点就可以继续复用。</p>
+<p>模型分类还应校验结果是否属于允许的类别。遇到无法判断、多个意图或缺少信息时，可以增加“需要澄清”分支，而不是把所有异常都当作普通问题。</p>
+<h2 id="三、沿着一次运行观察状态变化"><a href="#三、沿着一次运行观察状态变化" class="headerlink" title="三、沿着一次运行观察状态变化"></a>三、沿着一次运行观察状态变化</h2><p>以“请开电子发票”为例，一开始只有咨询内容。分类节点产生类别，开票节点准备回复，最后的节点整理面向页面的结果。</p>
+<table>
+<thead>
+<tr>
+<th>执行位置</th>
+<th>本步读取</th>
+<th>本步写入</th>
+<th>应继续保留的数据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>接收输入</td>
+<td>用户咨询</td>
+<td>原始输入</td>
+<td>原始输入</td>
+</tr>
+<tr>
+<td>分类完成</td>
+<td>原始输入</td>
+<td>类别：开票</td>
+<td>原始输入、类别</td>
+</tr>
+<tr>
+<td>开票处理完成</td>
+<td>类别及需要的业务信息</td>
+<td>回复草稿</td>
+<td>原始输入、类别、回复草稿</td>
+</tr>
+<tr>
+<td>整理结果完成</td>
+<td>类别、回复草稿</td>
+<td>最终展示结果</td>
+<td>本次运行所需的完整结果</td>
+</tr>
+</tbody></table>
+<p>节点通常返回自己负责的字段更新。例如，开票节点只更新回复内容，不需要把原始输入和类别再复制一遍。没有出现在更新里的其他字段，不会仅仅因为本节点未返回它们就被删除。</p>
+<p>这样做能让数据职责更明确：查看某个字段的写入者，就知道应该检查哪个节点。把整份状态在每个节点里展开后返回，容易让节点无意中再次提交过时字段，在后续并行改造时尤其难排查。</p>
+<p>节点最好也不要通过直接修改传入对象表达更新。返回明确的增量，让图运行时按字段规则处理，才能把更新过程和执行过程对应起来。<a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/javascript/langgraph/graph-api-state">状态定义与更新文档</a>介绍了这一机制。</p>
+<p>设计一个字段时，可以先确定三个问题：谁写它，谁读它，是否允许多次写入。比如，原始咨询只在入口写入；回复草稿可以在修改环节被替换；处理轨迹则可以持续追加。它们都在 State 中，更新方式却不相同。</p>
+<h2 id="四、Reducer-决定更新怎样合并"><a href="#四、Reducer-决定更新怎样合并" class="headerlink" title="四、Reducer 决定更新怎样合并"></a>四、Reducer 决定更新怎样合并</h2><p>Reducer 可以理解成一个字段的更新规则：拿到已有值和本次增量，计算这个字段接下来的值。</p>
+<p>常见策略有以下几种：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>可选择的更新策略</th>
+<th>实现时需要明确的约束</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>当前分类</td>
+<td>用新分类替换旧分类</td>
+<td>同一阶段由谁负责分类</td>
+</tr>
+<tr>
+<td>回复草稿</td>
+<td>替换为本轮修改结果</td>
+<td>哪一版是当前有效版本</td>
+</tr>
+<tr>
+<td>处理轨迹</td>
+<td>追加新的步骤记录</td>
+<td>节点只能提交本次新增记录</td>
+</tr>
+<tr>
+<td>各节点结果</td>
+<td>按节点 ID 合并</td>
+<td>不同节点是否会写同一个键</td>
+</tr>
+</tbody></table>
+<p>假设轨迹已经记录“分类”，开票节点只提交“开票处理”，合并后得到“分类 → 开票处理”。如果节点先把旧轨迹复制过来，再追加本次记录，并把整个数组提交给追加型 reducer，旧记录就会重复出现。</p>
+<p>对象合并也要注意层级。按节点 ID 浅合并结果，可以同时保留分类结果和回复结果；但同一个 ID 再次写入时，通常会替换该键对应的值，不会自动递归合并内部字段。是否保留历史版本，应在数据结构中另行设计。</p>
+<h3 id="并发更新不能依赖“最后返回的请求获胜”"><a href="#并发更新不能依赖“最后返回的请求获胜”" class="headerlink" title="并发更新不能依赖“最后返回的请求获胜”"></a>并发更新不能依赖“最后返回的请求获胜”</h3><p>假设增加两个独立节点，一个查订单，一个查用户资料。如果它们都写一个名为 <code>result</code> 的普通字段，就需要回答两份结果究竟怎样共存。</p>
+<p>对使用默认单值通道的字段，同一调度步内收到多个更新会产生并发更新问题。可以让两个节点分别写自己的字段，也可以为结果集合设计 reducer。不能仅靠请求返回的先后顺序，猜测哪个结果会留下。官方的<a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/javascript/langgraph/errors/INVALID_CONCURRENT_GRAPH_UPDATE">并发状态更新错误说明</a>讨论了这种情况。</p>
+<p>对于不同键的合并，顺序通常不影响内容；对于同一键的覆盖或数组追加，顺序可能影响业务含义。如果最终页面需要稳定排序，应携带步骤编号等明确依据，在展示或汇总时排序，而不是把并发完成顺序当作业务顺序。</p>
+<h2 id="五、连线不只是箭头：三种语义要分开"><a href="#五、连线不只是箭头：三种语义要分开" class="headerlink" title="五、连线不只是箭头：三种语义要分开"></a>五、连线不只是箭头：三种语义要分开</h2><p>状态解决“有什么数据”，连线解决“接下来执行什么”。有了正确的 reducer，并不代表节点一定会在正确的时间运行。</p>
+<h3 id="固定顺序：上一步完成后进入下一步"><a href="#固定顺序：上一步完成后进入下一步" class="headerlink" title="固定顺序：上一步完成后进入下一步"></a>固定顺序：上一步完成后进入下一步</h3><p>如果开票处理完成后总要整理回复，就可以使用固定边。这里的前提是，整理节点依赖的数据已经由前面的步骤产生。</p>
+<h3 id="条件分支：根据状态选择路径"><a href="#条件分支：根据状态选择路径" class="headerlink" title="条件分支：根据状态选择路径"></a>条件分支：根据状态选择路径</h3><p>分类节点先产生类别，路由逻辑再读取类别，选出退款、开票或普通咨询分支。路由函数的工作是选择下一步，业务字段的更新由对应节点完成，会更容易理解。</p>
+<p>也不要同时给分类节点添加一条固定业务出边，再期待条件边自动屏蔽它。固定路径与条件路径可能都会触发，必须按实际需要设计。</p>
+<h3 id="全部汇合：等所有必需的支路完成"><a href="#全部汇合：等所有必需的支路完成" class="headerlink" title="全部汇合：等所有必需的支路完成"></a>全部汇合：等所有必需的支路完成</h3><p>假设某项咨询需要同时查询订单和核对资料，然后统一形成回复。这时两个支路都应该执行，汇总节点需要等待两边都完成。数组形式的 <code>addEdge</code> 可以表达等待指定前置节点全部完成的关系。</p>
+<p>它和本篇最初的三选一分流不同：</p>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>哪些分支会执行</th>
+<th>后续节点的等待条件</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>退款、开票、普通咨询三选一</td>
+<td>只执行选中的一个</td>
+<td>选中的分支完成</td>
+</tr>
+<tr>
+<td>订单查询与资料核对</td>
+<td>两个都执行</td>
+<td>两个必需结果都已产生</td>
+</tr>
+<tr>
+<td>根据条件选择若干支路</td>
+<td>本次选中的集合</td>
+<td>等待本次实际需要的结果集合</td>
+</tr>
+</tbody></table>
+<p>如果让最初的“整理回复”同时等待退款、开票和普通咨询三个节点，它就无法被正常触发，因为两个未选中的节点根本不会执行。这不一定报错，图可能结束而缺少期望的最终结果，所以验收时还要检查最终输出是否存在。</p>
+<p>不同长度支路分别连接到汇总节点，也不等价于显式的全部等待。官方的<a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/javascript/langgraph/graph-api-control-flow">顺序、分支与循环文档</a>对这些调度差异有专门说明。实际实现应先写清等待条件，再选择相应 API。</p>
+<h2 id="六、循环需要业务退出条件"><a href="#六、循环需要业务退出条件" class="headerlink" title="六、循环需要业务退出条件"></a>六、循环需要业务退出条件</h2><p>工单回复生成后，可能需要检查是否缺少必要信息。如果不合格，就带着反馈进入修改步骤，再次检查。这种过程可以表达为循环。</p>
+<p>循环状态至少要保存当前草稿、检查结果、修改意见和已修改次数。业务规则可以约定最多修改两轮；达到次数上限仍不通过时，转入人工处理或返回待完善草稿。</p>
+<p>这里有三个不同的限制：</p>
+<ul>
+<li><strong>业务次数上限</strong>：控制“最多修改几轮”，决定达到上限后的产品行为。</li>
+<li><strong>调度步数上限</strong>：控制图最多推进多少个 super-step，防止异常路径持续执行。</li>
+<li><strong>时间预算</strong>：控制一次调用或整项任务最多等待多久。</li>
+</ul>
+<p><code>recursionLimit</code> 限制的是图的调度步数，不是 JavaScript 函数递归深度，也不能简单看作节点数量。同一步可以有多个并行节点，一个循环又可能跨越多个调度步。相关定义见 <a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/javascript/langgraph/graph-api">Graph API</a>。</p>
+<p>网络重试与业务循环也应分开。请求因为临时网络问题失败，可以在节点边界采用有限重试；草稿已经生成但质量不合格，则需要把反馈交给修改环节。两者的原因、输入和可能重复的操作都不同。</p>
+<h2 id="七、持久化与人工确认怎样接入"><a href="#七、持久化与人工确认怎样接入" class="headerlink" title="七、持久化与人工确认怎样接入"></a>七、持久化与人工确认怎样接入</h2><p>到目前为止，状态只说明图在运行时怎样传递数据。要支持“先暂停，明天确认后继续”，还需要保存和恢复执行进度。</p>
+<h3 id="运行日志、检查点、长期数据各有什么用途"><a href="#运行日志、检查点、长期数据各有什么用途" class="headerlink" title="运行日志、检查点、长期数据各有什么用途"></a>运行日志、检查点、长期数据各有什么用途</h3><table>
+<thead>
+<tr>
+<th>数据</th>
+<th>主要回答什么问题</th>
+<th>工单场景中的例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>运行日志</td>
+<td>发生了什么，哪里慢或失败</td>
+<td>分类耗时、错误信息</td>
+</tr>
+<tr>
+<td>Checkpoint</td>
+<td>这个线程保存了怎样的图执行状态</td>
+<td>待确认的草稿及恢复所需信息</td>
+</tr>
+<tr>
+<td>长期业务数据或 Store</td>
+<td>多次任务之间需要复用什么</td>
+<td>用户偏好、长期知识</td>
+</tr>
+</tbody></table>
+<p>自托管 LangGraph 时，需要配置 checkpointer，再使用线程标识关联调用。线程标识既用于定位状态，也意味着应用需要检查谁可以读取或恢复这个线程。内存实现适合学习；跨进程重启恢复需要持久化存储。官方<a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/javascript/langgraph/persistence">持久化文档</a>区分了检查点与跨线程数据的用途。</p>
+<h3 id="恢复不是在原来的代码行原地继续"><a href="#恢复不是在原来的代码行原地继续" class="headerlink" title="恢复不是在原来的代码行原地继续"></a>恢复不是在原来的代码行原地继续</h3><p>人工确认可以分成“生成草稿 → 暂停并展示 → 接收确认 → 继续处理”。调用方要把确认内容与正确线程对应起来，恢复后再校验确认结果。</p>
+<p>使用 <code>interrupt</code> 时有一个重要细节：恢复会重新进入包含中断的节点，中断之前的普通代码可能再次执行。因此，在暂停前直接发送通知或提交外部任务，可能产生重复副作用。<a target="_blank" rel="noopener" href="https://docs.langchain.com/oss/javascript/langgraph/interrupts">中断文档</a>明确说明了这一恢复规则。</p>
+<p>更容易管理的设计，是把可独立确认的步骤拆开，并为外部操作准备稳定的幂等标识和结果查询方式。即使有检查点，也不能假定外部系统的操作天然只会发生一次。</p>
+<p>“取消”和“暂停等待确认”也应区分。取消表示终止等待或请求停止；暂停则需要保留可恢复状态和明确的恢复入口。页面上的一个停止按钮，不会自动实现人工审批流程。</p>
+<h2 id="八、实现时先验证数据，再增加智能"><a href="#八、实现时先验证数据，再增加智能" class="headerlink" title="八、实现时先验证数据，再增加智能"></a>八、实现时先验证数据，再增加智能</h2><p>可以按下面的顺序搭建第一份图：</p>
+<ol>
+<li><strong>画出路径。</strong> 明确入口、正常结果、异常结果和结束位置。</li>
+<li><strong>定义状态。</strong> 列出每个字段的写入者、读取者与更新策略。</li>
+<li><strong>实现普通节点。</strong> 先用固定规则和确定结果检查数据传递。</li>
+<li><strong>连接并编译。</strong> 检查路由是否覆盖可能的类别，汇合条件是否正确。</li>
+<li><strong>观察一次运行。</strong> 对照输入、经过的节点和最终结果，定位每次更新。</li>
+<li><strong>逐步增加模型、并发或恢复。</strong> 每次只改变需要的部分，并补上对应的失败场景。</li>
+</ol>
+<p>编译成功不代表业务规则正确。对于本篇案例，可以用“退款”“发票”“普通问题”“同时包含两个关键词”“否定退款”等输入，分别检查路由是否符合已经声明的规则。再补充空输入、未知类别、节点失败和最终结果缺失的情况。</p>
+<p>这些是可用于验收的推演用例，没有替代真实模型评估或线上运行验证。以后接入模型分类时，还需要检查误分类和不确定输入，不能只看流程有没有执行到结束。</p>
+<p>如果希望把流程放到可编辑画布里，可以看看 GitHub 上的 **<a target="_blank" rel="noopener" href="https://github.com/hujinbin/LangChainWeb">LangChainWeb</a>**。它提供前端编辑与结果展示的实现，适合观察节点配置、连线和运行反馈如何组织；图执行与模型服务需要另行接入。欢迎 Star，也欢迎交流可视化工作流的实现思路。</p>
+<p>系列文章可以按需求继续阅读：</p>
+<ul>
+<li>想理解模型调用内部的数据转换：<a href="/2026/05/01/LangChain-%E5%85%A5%E9%97%A8%EF%BC%9A%E7%94%A8-JavaScript-%E7%BB%84%E7%BB%87%E6%A8%A1%E5%9E%8B%E8%B0%83%E7%94%A8%E4%B8%8E%E6%8F%90%E7%A4%BA%E6%A8%A1%E6%9D%BF/" title="LangChain JavaScript 入门">LangChain JavaScript 入门</a>。</li>
+<li>想判断自己的任务需要哪层抽象：<a href="/2026/07/24/LangChain-%E5%92%8C-LangGraph-%E7%9A%84%E5%8C%BA%E5%88%AB%EF%BC%8C%E7%BB%93%E5%90%88%E5%8F%AF%E8%A7%86%E5%8C%96%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%90%86%E8%A7%A3%E9%80%89%E5%9E%8B/" title="LangChain 和 LangGraph 如何选择">LangChain 和 LangGraph 如何选择</a>。</li>
+<li>想串起对话设计、画布编辑和运行过程：<a href="/2026/10/14/LangChain-%E4%B8%8E-LangGraph-%E9%A1%B9%E7%9B%AE%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E5%AF%B9%E8%AF%9D%E7%94%9F%E6%88%90%E5%88%B0%E5%8F%AF%E7%BC%96%E8%BE%91%E5%B7%A5%E4%BD%9C%E6%B5%81/" title="从对话生成到可编辑工作流">从对话生成到可编辑工作流</a>。</li>
+</ul>
+</div><div class="article-licensing box"><div class="licensing-title"><p>LangGraph 入门：用状态、节点和连线构建工作流</p><p><a href="https://hjb.leheavengame.com/2026/06/14/LangGraph-入门：用状态、节点和连线构建工作流/">https://hjb.leheavengame.com/2026/06/14/LangGraph-入门：用状态、节点和连线构建工作流/</a></p></div><div class="licensing-meta level is-mobile"><div class="level-left"><div class="level-item is-narrow"><div><h6>作者</h6><a href="https://hjb.leheavengame.com"><p>hujinbin</p></a></div></div><div class="level-item is-narrow"><div><h6>发布于</h6><p>2026-06-14</p></div></div><div class="level-item is-narrow"><div><h6>更新于</h6><p>2026-11-21</p></div></div><div class="level-item is-narrow"><div><h6>许可协议</h6><p><a class="icon" rel="noopener" target="_blank" title="Creative Commons" href="https://creativecommons.org/"><i class="fab fa-creative-commons"></i></a><a class="icon" rel="noopener" target="_blank" title="Attribution" href="https://creativecommons.org/licenses/by/4.0/"><i class="fab fa-creative-commons-by"></i></a><a class="icon" rel="noopener" target="_blank" title="Noncommercial" href="https://creativecommons.org/licenses/by-nc/4.0/"><i class="fab fa-creative-commons-nc"></i></a></p></div></div></div></div></div><div class="recommend-area"><div class="recommend-post"><span class="is-size-6 has-text-grey has-mr-7"># 相关文章</span><br><span>  1.<a class="is-size-6" href="/2026/11/18/DeepSeek-Harness-%E5%AE%9E%E6%88%98%EF%BC%9A%E5%81%9A%E4%B8%80%E4%B8%AA%E9%9D%A2%E5%90%91-Three-js-%E4%B8%8E-Python-%E7%9A%84-Agent-CLI/" target="_blank">DeepSeek Harness 实战：做一个面向 Three.js 与 Python 的 Agent CLI</a><br></span><span>  2.<a class="is-size-6" href="/2026/11/10/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%AE%9E%E6%88%98%EF%BC%9A%E7%94%A8-Open-Marker-%E8%B7%91%E9%80%9A%E4%BB%8E%E5%8E%9F%E5%A7%8B%E6%96%87%E6%9C%AC%E5%88%B0%E5%AE%A1%E6%A0%B8%E4%BA%A4%E4%BB%98%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B/" target="_blank">数据标注实战：用 Open Marker 跑通从原始文本到审核交付的完整流程</a><br></span><span>  3.<a class="is-size-6" href="/2026/10/14/LangChain-%E4%B8%8E-LangGraph-%E9%A1%B9%E7%9B%AE%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E5%AF%B9%E8%AF%9D%E7%94%9F%E6%88%90%E5%88%B0%E5%8F%AF%E7%BC%96%E8%BE%91%E5%B7%A5%E4%BD%9C%E6%B5%81/" target="_blank">LangChain 与 LangGraph 项目实战：从对话生成到可编辑工作流</a><br></span><span>  4.<a class="is-size-6" href="/2026/10/02/DeepSeek-Harness-%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90%EF%BC%9A%E4%B8%80%E6%AC%A1%E4%BB%BB%E5%8A%A1%E5%A6%82%E4%BD%95%E4%BB%8E%E6%A8%A1%E5%9E%8B%E8%B5%B0%E5%88%B0%E5%B7%A5%E5%85%B7%E6%89%A7%E8%A1%8C/" target="_blank">DeepSeek Harness 原理解析：一次任务如何从模型走到工具执行</a><br></span><span>  5.<a class="is-size-6" href="/2026/09/20/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F%E4%BB%8E%E4%B8%80%E6%9D%A1%E6%A0%87%E7%AD%BE%E7%90%86%E8%A7%A3%E6%A8%A1%E5%9E%8B%E5%A6%82%E4%BD%95%E5%AD%A6%E4%B9%A0/" target="_blank">数据标注到底在做什么？从一条标签理解模型如何学习</a><br></span><span>  6.<a class="is-size-6" href="/2026/07/24/LangChain-%E5%92%8C-LangGraph-%E7%9A%84%E5%8C%BA%E5%88%AB%EF%BC%8C%E7%BB%93%E5%90%88%E5%8F%AF%E8%A7%86%E5%8C%96%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%90%86%E8%A7%A3%E9%80%89%E5%9E%8B/" target="_blank">LangChain 和 LangGraph 的区别，结合可视化工作流理解选型</a><br></span><span>  7.<a class="is-size-6" href="/2026/05/01/LangChain-%E5%85%A5%E9%97%A8%EF%BC%9A%E7%94%A8-JavaScript-%E7%BB%84%E7%BB%87%E6%A8%A1%E5%9E%8B%E8%B0%83%E7%94%A8%E4%B8%8E%E6%8F%90%E7%A4%BA%E6%A8%A1%E6%9D%BF/" target="_blank">LangChain 入门：用 JavaScript 组织模型调用与提示模板</a><br></span></div></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/social-share.js/1.0.16/css/share.min.css"><div class="social-share"></div><script src="https://cdnjs.loli.net/ajax/libs/social-share.js/1.0.16/js/social-share.min.js"></script></article></div><div class="card"><div class="card-content"><h3 class="menu-label has-text-centered">喜欢这篇文章？打赏一下作者吧</h3><div class="buttons is-centered"><a class="button donate" data-type="alipay"><span class="icon is-small"><i class="fab fa-alipay"></i></span><span>支付宝</span><span class="qrcode"><img src="https://img.alicdn.com/imgextra/i4/2509590220/TB2GxhZfjnD8KJjSspbXXbbEXXa_!!2509590220.jpg" alt="支付宝"></span></a><a class="button donate" data-type="wechat"><span class="icon is-small"><i class="fab fa-weixin"></i></span><span>微信</span><span class="qrcode"><img src="https://img.alicdn.com/imgextra/i1/2509590220/TB2K0hPfdnJ8KJjSszdXXaxuFXa_!!2509590220.png" alt="微信"></span></a></div></div></div><nav class="post-navigation mt-4 level is-mobile"><div class="level-start"><a class="article-nav-prev level level-item link-muted" href="/2026/07/24/LangChain-%E5%92%8C-LangGraph-%E7%9A%84%E5%8C%BA%E5%88%AB%EF%BC%8C%E7%BB%93%E5%90%88%E5%8F%AF%E8%A7%86%E5%8C%96%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%90%86%E8%A7%A3%E9%80%89%E5%9E%8B/"><i class="level-item fas fa-chevron-left"></i><span class="level-item">LangChain 和 LangGraph 的区别，结合可视化工作流理解选型</span></a></div><div class="level-end"><a class="article-nav-next level level-item link-muted" href="/2026/05/01/LangChain-%E5%85%A5%E9%97%A8%EF%BC%9A%E7%94%A8-JavaScript-%E7%BB%84%E7%BB%87%E6%A8%A1%E5%9E%8B%E8%B0%83%E7%94%A8%E4%B8%8E%E6%8F%90%E7%A4%BA%E6%A8%A1%E6%9D%BF/"><span class="level-item">LangChain 入门：用 JavaScript 组织模型调用与提示模板</span><i class="level-item fas fa-chevron-right"></i></a></div></nav><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><div class="card"><div class="card-content"><div class="title is-5">评论</div><div id="comment-container"></div><link rel="stylesheet" href="https://cdnjs.loli.net/ajax/libs/gitalk/1.6.0/gitalk.css"><script> $.getScript('/js/gitalk.min.js', function () {
+            var cleanUrl = window.location.origin + window.location.pathname + window.location.hash;
+            var gitalk = new Gitalk({
+            language:'zh-CN',
+            id: '7a870b405e5c5cdf716ffca9d0feeb1a',
+            title: "LangGraph 入门：用状态、节点和连线构建工作流",
+            url: cleanUrl,
+            repo: 'myBlog',
+            owner: 'hujinbin',
+            clientID: '805d0c127d7edb5532bb',
+            clientSecret: '89de913bcdc87f3e47e916e5516f21ae8f0a69dd',
+            admin: ["hujinbin"],
+            createIssueManually: false,
+            distractionFreeMode: false,
+            perPage: 10,
+            pagerDirection: 'last',
+            labels: ["Gitalk"],
+            proxy: 'https://www.leheavengame.com/api/github/oauth/access_token',
+            
+            enableHotKey: true,
+            isLocked: false
+        })
+        gitalk.render('comment-container')});</script></div></div></div><div class="column column-left is-4-tablet is-4-desktop is-3-widescreen  order-1 is-sticky"><!--!--><div class="card widget" data-type="profile"><div class="card-content"><nav class="level"><div class="level-item has-text-centered flex-shrink-1"><div><figure class="image is-128x128 mx-auto mb-2"><img class="avatar is-rounded" src="http://cdn.leheavengame.com/jue/images/89090210-71cf-11eb-98c3-375c38d4a5d6.jpeg" alt="胡金斌"></figure><p class="title is-size-4 is-block" style="line-height:inherit;">胡金斌</p><p class="is-size-6 is-block">前端 / 全栈开发工程师</p><p class="is-size-6 is-flex justify-content-center"><i class="fas fa-map-marker-alt mr-1"></i><span>浙江杭州</span></p></div></div></nav><nav class="level is-mobile"><div class="level-item has-text-centered is-marginless"><div><p class="heading">文章</p><a href="/archives"><p class="title">66</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">分类</p><a href="/categories"><p class="title">1</p></a></div></div><div class="level-item has-text-centered is-marginless"><div><p class="heading">标签</p><a href="/tags"><p class="title">83</p></a></div></div></nav><div class="level"><a class="level-item button is-primary is-rounded" href="https://github.com/hujinbin" target="_blank" rel="noopener">关注我</a></div><div class="level is-mobile"><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="Github" href="https://github.com/hujinbin"><i class="fab fa-github"></i></a><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="Email" href="mailto:437044048@qq.com"><i class="fa fa-envelope"></i></a><a class="level-item button is-transparent is-marginless" target="_blank" rel="noopener" title="RSS" href="/atom.xml"><i class="fas fa-rss"></i></a></div><div><hr><p id="hitokoto">:D 一言句子获取中...</p><script type="text/javascript" defer>function getYiyan(){
+                                $.getJSON("https://v1.hitokoto.cn/", function (data) {
+                                if(data){
+                                    $('#hitokoto').html("");
+                                    $('#hitokoto').append("<strong style='color: #3273dc;'>"+data.hitokoto+"</strong>"+
+                                    "<p>"+"来源《"+data.from+"》</p><p>提供者-"+data.creator+"</p>");
+                                }});}
+                                $(function (){getYiyan();$('#hitokoto').click(function(){getYiyan();})});</script></div></div></div><div class="card widget" data-type="links"><div class="card-content"><div class="menu"><h3 class="menu-label">链接</h3><ul class="menu-list"><li><a class="level is-mobile" href="https://cash.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惠shop好货</span></span><span class="level-right"><span class="level-item tag">cash.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://jue.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惊觉</span></span><span class="level-right"><span class="level-item tag">jue.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://bbs.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">乾学网</span></span><span class="level-right"><span class="level-item tag">bbs.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://guide.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">乾坤宝录</span></span><span class="level-right"><span class="level-item tag">guide.leheavengame.com</span></span></a></li><li><a class="level is-mobile" href="https://coupon.leheavengame.com/" target="_blank" rel="noopener"><span class="level-left"><span class="level-item">惠shop</span></span><span class="level-right"><span class="level-item tag">coupon.leheavengame.com</span></span></a></li></ul></div></div></div><div class="card widget adsense-widget"><div class="card-content"><h3 class="menu-label adsense-label">广告</h3><div class="google-ad-unit" data-ad-client="ca-pub-7979174285252748" data-ad-slot="2903739942" data-ad-format="auto"></div></div></div><!--!--><div class="card widget"><div class="card-content"><h3 class="menu-label">最新文章</h3><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-11-18T14:05:35.000Z">2026-11-18</time></p><p class="title"><a href="/2026/11/18/DeepSeek-Harness-%E5%AE%9E%E6%88%98%EF%BC%9A%E5%81%9A%E4%B8%80%E4%B8%AA%E9%9D%A2%E5%90%91-Three-js-%E4%B8%8E-Python-%E7%9A%84-Agent-CLI/">DeepSeek Harness 实战：做一个面向 Three.js 与 Python 的 Agent CLI</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-11-10T12:19:06.000Z">2026-11-10</time></p><p class="title"><a href="/2026/11/10/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%AE%9E%E6%88%98%EF%BC%9A%E7%94%A8-Open-Marker-%E8%B7%91%E9%80%9A%E4%BB%8E%E5%8E%9F%E5%A7%8B%E6%96%87%E6%9C%AC%E5%88%B0%E5%AE%A1%E6%A0%B8%E4%BA%A4%E4%BB%98%E7%9A%84%E5%AE%8C%E6%95%B4%E6%B5%81%E7%A8%8B/">数据标注实战：用 Open Marker 跑通从原始文本到审核交付的完整流程</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-10-14T15:16:49.000Z">2026-10-14</time></p><p class="title"><a href="/2026/10/14/LangChain-%E4%B8%8E-LangGraph-%E9%A1%B9%E7%9B%AE%E5%AE%9E%E6%88%98%EF%BC%9A%E4%BB%8E%E5%AF%B9%E8%AF%9D%E7%94%9F%E6%88%90%E5%88%B0%E5%8F%AF%E7%BC%96%E8%BE%91%E5%B7%A5%E4%BD%9C%E6%B5%81/">LangChain 与 LangGraph 项目实战：从对话生成到可编辑工作流</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-10-02T09:05:33.000Z">2026-10-02</time></p><p class="title"><a href="/2026/10/02/DeepSeek-Harness-%E5%8E%9F%E7%90%86%E8%A7%A3%E6%9E%90%EF%BC%9A%E4%B8%80%E6%AC%A1%E4%BB%BB%E5%8A%A1%E5%A6%82%E4%BD%95%E4%BB%8E%E6%A8%A1%E5%9E%8B%E8%B5%B0%E5%88%B0%E5%B7%A5%E5%85%B7%E6%89%A7%E8%A1%8C/">DeepSeek Harness 原理解析：一次任务如何从模型走到工具执行</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article><article class="media"><div class="media-content"><p class="date"><time dateTime="2026-09-20T03:19:04.000Z">2026-09-20</time></p><p class="title"><a href="/2026/09/20/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8%E5%88%B0%E5%BA%95%E5%9C%A8%E5%81%9A%E4%BB%80%E4%B9%88%EF%BC%9F%E4%BB%8E%E4%B8%80%E6%9D%A1%E6%A0%87%E7%AD%BE%E7%90%86%E8%A7%A3%E6%A8%A1%E5%9E%8B%E5%A6%82%E4%BD%95%E5%AD%A6%E4%B9%A0/">数据标注到底在做什么？从一条标签理解模型如何学习</a></p><p class="categories"><a href="/categories/AI-%E5%BC%80%E5%8F%91/">AI 开发</a></p></div></article></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">分类</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/categories/AI-%E5%BC%80%E5%8F%91/"><span class="level-start"><span class="level-item">AI 开发</span></span><span class="level-end"><span class="level-item tag">8</span></span></a></li></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">归档</h3><ul class="menu-list"><li><a class="level is-mobile is-marginless" href="/archives/2026/11/"><span class="level-start"><span class="level-item">十一月 2026</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/10/"><span class="level-start"><span class="level-item">十月 2026</span></span><span class="level-end"><span class="level-item tag">2</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/09/"><span class="level-start"><span class="level-item">九月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/08/"><span class="level-start"><span class="level-item">八月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><li><a class="level is-mobile is-marginless" href="/archives/2026/07/"><span class="level-start"><span class="level-item">七月 2026</span></span><span class="level-end"><span class="level-item tag">1</span></span></a></li><a class="level is-mobile is-marginless" href="/archives/"><span class="level-start"><span class="level-item">查看全部&gt;&gt;</span></span></a></ul></div></div></div><div class="card widget"><div class="card-content"><div class="menu"><h3 class="menu-label">标签</h3><div class="field is-grouped is-grouped-multiline"><div class="control"><a class="tags has-addons" href="/tags/javascript/"><span class="tag">javascript</span><span class="tag is-grey-lightest">39</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Agent/"><span class="tag">AI Agent</span><span class="tag is-grey-lightest">6</span></a></div><div class="control"><a class="tags has-addons" href="/tags/node/"><span class="tag">node</span><span class="tag is-grey-lightest">6</span></a></div><div class="control"><a class="tags has-addons" href="/tags/Vue/"><span class="tag">Vue</span><span class="tag is-grey-lightest">5</span></a></div><div class="control"><a class="tags has-addons" href="/tags/LangChain/"><span class="tag">LangChain</span><span class="tag is-grey-lightest">4</span></a></div><div class="control"><a class="tags has-addons" href="/tags/TypeScript/"><span class="tag">TypeScript</span><span class="tag is-grey-lightest">4</span></a></div><div class="control"><a class="tags has-addons" href="/tags/JavaScript/"><span class="tag">JavaScript</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/LangGraph/"><span class="tag">LangGraph</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/css/"><span class="tag">css</span><span class="tag is-grey-lightest">3</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI/"><span class="tag">AI</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Tools/"><span class="tag">AI Tools</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/DeepSeek-Harness/"><span class="tag">DeepSeek Harness</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/MCP/"><span class="tag">MCP</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/Three-js/"><span class="tag">Three.js</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/http/"><span class="tag">http</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%89%8D%E7%AB%AF%E5%BC%80%E5%8F%91/"><span class="tag">前端开发</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E5%B7%A5%E4%BD%9C%E6%B5%81/"><span class="tag">工作流</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/%E6%95%B0%E6%8D%AE%E6%A0%87%E6%B3%A8/"><span class="tag">数据标注</span><span class="tag is-grey-lightest">2</span></a></div><div class="control"><a class="tags has-addons" href="/tags/3D%E5%8F%AF%E8%A7%86%E5%8C%96/"><span class="tag">3D可视化</span><span class="tag is-grey-lightest">1</span></a></div><div class="control"><a class="tags has-addons" href="/tags/AI-Skill/"><span class="tag">AI Skill</span><span class="tag is-grey-lightest">1</span></a></div></div><div class="field is-grouped is-grouped-multiline"><a class="tags has-addons" href="/tags/"><span class="tag">查看全部&gt;&gt;</span></a></div></div></div></div><div class="card widget" data-type="subscribe-email"><div class="card-content"><div class="menu"><h3 class="menu-label">订阅更新</h3><form action="https://feedburner.google.com/fb/a/mailverify" method="post" target="popupwindow" onsubmit="window.open(&#039;https://feedburner.google.com/fb/a/mailverify?uri=&#039;,&#039;popupwindow&#039;,&#039;scrollbars=yes,width=550,height=520&#039;);return true"><input type="hidden" value="" name="uri"><input type="hidden" name="loc" value="en_US"><div class="field has-addons"><div class="control has-icons-left is-expanded"><input class="input" name="email" type="email" placeholder="Email"><span class="icon is-small is-left"><i class="fas fa-envelope"></i></span></div><div class="control"><input class="button" type="submit" value="订阅"></div></div></form></div></div></div><div class="column-right-shadow is-hidden-widescreen"></div></div></div></div></section><footer class="footer"><div class="container"><div class="level"><div class="level-start"><a class="footer-logo is-block mb-2" href="/"><img src="http://cdn.leheavengame.com/jue/images/bcd357f0-a4c2-11eb-ac26-0f6ed95d4e69.png" alt="胡金斌的个人网站" height="28"></a><p class="size-small"><span>&copy; 2026 hujinbin</span>  <br><span>© <a href="https://beian.miit.gov.cn/" rel="nofollow noopener noreferrer" target="_blank">浙ICP备17021862号-1</a><br></span><span>© 版权说明：[本网站所有内容均收集于互联网或自己创作,<br />&nbsp;&nbsp;&nbsp;&nbsp;方便于网友与自己学习交流，如有侵权，请<a href="/message" target="_blank">留言</a>，立即处理]<br /></span><span><span id="statistic-times">loading...</span><script>function createTime(time) {
+            var n = new Date(time);
+            now.setTime(now.getTime() + 250),
+                days = (now - n) / 1e3 / 60 / 60 / 24,
+                dnum = Math.floor(days),
+                hours = (now - n) / 1e3 / 60 / 60 - 24 * dnum,
+                hnum = Math.floor(hours),
+            1 == String(hnum).length && (hnum = "0" + hnum),
+                minutes = (now - n) / 1e3 / 60 - 1440 * dnum - 60 * hnum,
+                mnum = Math.floor(minutes),
+            1 == String(mnum).length && (mnum = "0" + mnum),
+                seconds = (now - n) / 1e3 - 86400 * dnum - 3600 * hnum - 60 * mnum,
+                snum = Math.round(seconds),
+            1 == String(snum).length && (snum = "0" + snum),
+                document.getElementById("statistic-times").innerHTML = "❤️本站自 <strong>"+time.split(" ")[0].replace(/\//g,".")+"</strong> 已运行 <strong>" + dnum + "</strong> 天 <strong>" + hnum + "</strong> 小时 <strong>" + mnum + "</strong> 分 <strong>" + snum + "</strong> 秒！❤️";
+        }var now = new Date();setInterval("createTime('2017/05/25 00:00:00')", 250,"");</script><br></span><div class="size-small"><span>❤️感谢 <strong><span id="busuanzi_value_site_uv">99+</span></strong> 小伙伴的 <strong><span id="busuanzi_value_site_pv">99+</span></strong> 次光临！❤️</span></div></p></div><div class="level-end"><div class="sideMusic"><link rel="stylesheet" href="/css/APlayer.min.css"><script src="/js/APlayer.min.js"></script><script src="/js/Meting.min.js"></script><meting-js style="width: auto;height: 2000px;" server="netease" type="playlist" id="2364053447" theme="#2980b9" loop="all" autoplay="false" order="list" storageName="aplayer-setting" lrctype="0" list-max-height="400px" fixed="true"></meting-js></div></div></div></div><script>
+            var bp = document.createElement('script');
+            var curProtocol = window.location.protocol.split(':')[0];
+            if (curProtocol === 'https') {
+                bp.src = 'https://zz.bdstatic.com/linksubmit/push.js';
+            }
+            else {
+                bp.src = 'http://push.zhanzhang.baidu.com/push.js';
+            }
+            var s = document.getElementsByTagName("script")[0];
+            s.parentNode.insertBefore(bp, s);
+        </script></footer><script src="/js/vendor/moment-with-locales-2.22.2.min.js"></script><script src="/js/vendor/clipboard-2.0.4.min.js" defer></script><script>moment.locale("zh-CN");</script><script>var IcarusThemeSettings = {
+            article: {
+                highlight: {
+                    clipboard: true,
+                    fold: 'unfolded'
+                }
+            }
+        };</script><script src="/js/column.js"></script><script src="/js/animation.js"></script><a id="back-to-top" title="回到顶端" href="javascript:;"><i class="fas fa-chevron-up"></i></a><script src="/js/back_to_top.js" defer></script><!--!--><!--!--><!--!--><script src="https://cdnjs.loli.net/ajax/libs/lightgallery/1.6.8/js/lightgallery.min.js" defer></script><script src="https://cdnjs.loli.net/ajax/libs/justifiedGallery/3.7.0/js/jquery.justifiedGallery.min.js" defer></script><script>window.addEventListener("load", () => {
+            if (typeof $.fn.lightGallery === 'function') {
+                $('.article').lightGallery({ selector: '.gallery-item' });
+            }
+            if (typeof $.fn.justifiedGallery === 'function') {
+                if ($('.justified-gallery > p > .gallery-item').length) {
+                    $('.justified-gallery > p > .gallery-item').unwrap();
+                }
+                $('.justified-gallery').justifiedGallery();
+            }
+        });</script><!--!--><!--!--><!--!--><script src="/js/main.js" defer></script><script>$.getScript('/js/comment-issue-data.js',function(){loadIssueData('805d0c127d7edb5532bb','89de913bcdc87f3e47e916e5516f21ae8f0a69dd','hujinbin','myBlog',false);})</script><div class="searchbox"><div class="searchbox-container"><div class="searchbox-header"><div class="searchbox-input-container"><input class="searchbox-input" type="text" placeholder="想要查找什么..."></div><a class="searchbox-close" href="javascript:;">×</a></div><div class="searchbox-body"></div></div></div><script src="/js/insight.js" defer></script><script>document.addEventListener('DOMContentLoaded', function () {
+            loadInsight({"contentUrl":"/content.json"}, {"hint":"想要查找什么...","untitled":"(无标题)","posts":"文章","pages":"页面","categories":"分类","tags":"标签"});
+        });</script><script src="/js/pjax.js"></script><script type="text/javascript">var pjax = new Pjax({
+            elements: "a",//代表点击链接就更新
+            selectors: [  //代表要更新的节点
+                "body > .section", // 只替换页面主区域，不匹配文章中的同名区块
+                "body > .navbar-main .navbar-start", // 同步当前菜单高亮，保留搜索和主题切换按钮。
+                "title"
+            ],
+            cache: true,
+            cacheBust:false,
+            timeout: 8000
+        })
+
+        function loadBusuanzi(){
+        $.getScript("//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js", function () {});
+        }
+
+        // 开始 PJAX 执行的函数
+        document.addEventListener('pjax:send', function () {
+        });
+        
+        // PJAX 完成之后执行的函数，可以和上面的重载放在一起
+        document.addEventListener('pjax:complete', function () {
+            $("body > .section").css({opacity:1});
+            if(false){
+                try{
+                    $.getScript('/js/comment-issue-data.js',function(){loadIssueData('805d0c127d7edb5532bb','89de913bcdc87f3e47e916e5516f21ae8f0a69dd','hujinbin','myBlog',false);});
+                }catch(e){}
+             }
+            if(false){
+                loadMathJax();
+            }
+            loadMainJs(jQuery, window.moment, window.ClipboardJS, window.IcarusThemeSettings);
+            loadBackTop();
+            loadBusuanzi();
+            if(typeof loadBanner == 'function'){
+                loadBanner();
+            }
+        });</script></body></html>

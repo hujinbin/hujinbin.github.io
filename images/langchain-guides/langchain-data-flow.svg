@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="680" viewBox="0 0 680 680" role="img" aria-labelledby="title desc">
+  <title id="title">一次模型调用的数据流</title>
+  <desc id="desc">业务输入进入提示模板，模板构造消息，模型返回响应，解析与业务校验将响应转换成可用于页面的结果。</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10z" fill="#64748b"/></marker>
+  </defs>
+  <rect width="680" height="680" rx="20" fill="#f8fafc"/>
+  <g font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" text-anchor="middle">
+    <text x="340" y="52" font-size="28" font-weight="700" fill="#0f172a">一次模型调用的数据流</text>
+    <text x="340" y="86" font-size="18" fill="#475569">每一步都有明确的输入、输出和责任</text>
+    <rect x="50" y="114" width="580" height="84" rx="12" fill="#e0e7ff" stroke="#a5b4fc"/>
+    <text x="340" y="149" font-size="24" font-weight="700" fill="#312e81">业务输入</text>
+    <text x="340" y="179" font-size="19" fill="#3730a3">主题 · 目标读者 · 本轮要求</text>
+    <path d="M340 201 V231" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <rect x="50" y="240" width="580" height="84" rx="12" fill="#dbeafe" stroke="#93c5fd"/>
+    <text x="340" y="275" font-size="24" font-weight="700" fill="#1e3a8a">提示模板</text>
+    <text x="340" y="305" font-size="19" fill="#1e40af">固定规则 + 必要历史 + 当前输入 → 消息</text>
+    <path d="M340 327 V357" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <rect x="50" y="366" width="580" height="84" rx="12" fill="#ccfbf1" stroke="#5eead4"/>
+    <text x="340" y="401" font-size="24" font-weight="700" fill="#134e4a">聊天模型</text>
+    <text x="340" y="431" font-size="19" fill="#115e59">接收消息 → 返回模型响应</text>
+    <path d="M340 453 V483" stroke="#64748b" stroke-width="2.5" marker-end="url(#arrow)"/>
+    <rect x="50" y="492" width="580" height="104" rx="12" fill="#fff7ed" stroke="#fdba74"/>
+    <text x="340" y="530" font-size="24" font-weight="700" fill="#7c2d12">解析与校验</text>
+    <text x="340" y="562" font-size="19" fill="#9a3412">提取结果 · 检查结构 · 判断业务约束</text>
+    <text x="340" y="640" font-size="20" fill="#334155">校验通过的提纲 → 展示、编辑或交给下一步</text>
+  </g>
+</svg>

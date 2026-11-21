@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="800" viewBox="0 0 680 800" role="img" aria-labelledby="title desc">
+  <title id="title">从需要解决的问题选择入口</title>
+  <desc id="desc">稳定且少量的请求可以直接使用模型 SDK。复用模型接口与模板可使用 LangChain 组件。模型需要持续选择工具时可使用 LangChain Agent。需要显式控制状态、路由和恢复时可使用 LangGraph。这些方案可以组合。</desc>
+  <rect width="680" height="800" rx="20" fill="#f8fafc"/>
+  <g font-family="Microsoft YaHei, PingFang SC, Noto Sans CJK SC, sans-serif" text-anchor="middle">
+    <text x="340" y="49" font-size="28" font-weight="700" fill="#0f172a">从需要解决的问题选择入口</text>
+    <text x="340" y="84" font-size="19" fill="#475569">关注决策方式、状态需求与恢复要求</text>
+    <rect x="38" y="114" width="604" height="126" rx="14" fill="#f1f5f9" stroke="#cbd5e1"/>
+    <text x="340" y="150" font-size="21" fill="#475569">少量稳定请求，步骤容易维护</text>
+    <text x="340" y="188" font-size="25" font-weight="700" fill="#334155">模型 SDK / 普通函数</text>
+    <text x="340" y="218" font-size="18" fill="#475569">先完成明确的输入、输出和错误处理</text>
+    <rect x="38" y="258" width="604" height="126" rx="14" fill="#dbeafe" stroke="#93c5fd"/>
+    <text x="340" y="294" font-size="21" fill="#1e40af">多处复用消息、模板与模型接口</text>
+    <text x="340" y="332" font-size="25" font-weight="700" fill="#1e3a8a">LangChain 组件</text>
+    <text x="340" y="362" font-size="18" fill="#1e40af">组织调用链，复用模型与解析能力</text>
+    <rect x="38" y="402" width="604" height="126" rx="14" fill="#e0e7ff" stroke="#a5b4fc"/>
+    <text x="340" y="438" font-size="21" fill="#3730a3">模型根据工具反馈继续决定动作</text>
+    <text x="340" y="476" font-size="25" font-weight="700" fill="#312e81">LangChain Agent</text>
+    <text x="340" y="506" font-size="18" fill="#3730a3">配置工具、行为边界和执行预算</text>
+    <rect x="38" y="546" width="604" height="126" rx="14" fill="#ccfbf1" stroke="#5eead4"/>
+    <text x="340" y="582" font-size="21" fill="#115e59">需要显式管理状态、路由与恢复</text>
+    <text x="340" y="620" font-size="25" font-weight="700" fill="#134e4a">LangGraph</text>
+    <text x="340" y="650" font-size="18" fill="#115e59">定义节点关系，并落实存储与恢复机制</text>
+    <text x="340" y="721" font-size="22" font-weight="700" fill="#334155">这些入口可以组合使用</text>
+    <text x="340" y="754" font-size="19" fill="#475569">一个图节点，也可以包含一条调用链或一个 Agent</text>
+  </g>
+</svg>
